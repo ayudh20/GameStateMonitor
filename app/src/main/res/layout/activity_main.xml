@@ -63,33 +63,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- System Status Badge -->
-            <LinearLayout
-                android:id="@+id/statusBadgeContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_medium"
-                android:background="@drawable/bg_status_badge"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
 
-                <View
-                    android:id="@+id/statusIndicatorDot"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
-                    android:background="@drawable/bg_status_badge"
-                    android:backgroundTint="@color/status_optimal" />
-
-                <TextView
-                    android:id="@+id/tvSystemStatus"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing_small"
-                    android:text="@string/status_optimal"
-                    android:textColor="@color/status_optimal"
-                    android:textSize="@dimen/text_caption"
-                    android:textStyle="bold" />
-            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvLastUpdated"

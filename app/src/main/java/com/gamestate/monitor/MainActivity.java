@@ -53,9 +53,7 @@ public class MainActivity extends AppCompatActivity {
     // UI View References
     // =========================================================================
 
-    // Header & Status
-    private View statusIndicatorDot;
-    private TextView tvSystemStatus;
+    // Header
     private TextView tvLastUpdated;
 
     // Device Info Card
@@ -270,8 +268,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================================
 
     private void bindViews() {
-        statusIndicatorDot = findViewById(R.id.statusIndicatorDot);
-        tvSystemStatus = findViewById(R.id.tvSystemStatus);
         tvLastUpdated = findViewById(R.id.tvLastUpdated);
 
         tvDeviceModel = findViewById(R.id.tvDeviceModel);
@@ -375,33 +371,5 @@ public class MainActivity extends AppCompatActivity {
 
         // 5. Timestamp
         tvLastUpdated.setText("Last Updated: " + stats.getFormattedTimestamp());
-
-        // 6. System Status Indicator Evaluation
-        applySystemStatusUI(stats.getSystemStatus());
-    }
-
-    private void applySystemStatusUI(PerformanceStats.SystemStatus status) {
-        int colorRes;
-        String statusText;
-
-        switch (status) {
-            case HIGH_LOAD:
-                colorRes = ContextCompat.getColor(this, R.color.status_high_load);
-                statusText = getString(R.string.status_high_load);
-                break;
-            case MODERATE:
-                colorRes = ContextCompat.getColor(this, R.color.status_moderate);
-                statusText = getString(R.string.status_moderate);
-                break;
-            case OPTIMAL:
-            default:
-                colorRes = ContextCompat.getColor(this, R.color.status_optimal);
-                statusText = getString(R.string.status_optimal);
-                break;
-        }
-
-        tvSystemStatus.setText(statusText);
-        tvSystemStatus.setTextColor(colorRes);
-        statusIndicatorDot.setBackgroundTintList(ColorStateList.valueOf(colorRes));
     }
 }
