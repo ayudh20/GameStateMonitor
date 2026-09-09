@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Core Brand Colors (Gaming Dark Mode) -->
+    <color name="primary_neon">#00E676</color>
+    <color name="primary_neon_glow">#3300E676</color>
+    <color name="secondary_cyan">#00B0FF</color>
+    <color name="accent_cyan">#00B0FF</color>
+    <color name="accent_purple">#7C4DFF</color>
+    <color name="accent_yellow">#FFD600</color>
+
+    <!-- Status Colors -->
+    <color name="status_optimal">#00E676</color>
+    <color name="status_moderate">#FF9100</color>
+    <color name="status_high_load">#FF5252</color>
+
+    <!-- Backgrounds and Surfaces (Pure AMOLED / OLED Black) -->
+    <color name="bg_dark">#000000</color>
+    <color name="bg_card">#050505</color>
+    <color name="bg_card_stroke">#1C1D24</color>
+    <color name="bg_inner_container">#0A0A0E</color>
+    <color name="bg_progress_track">#141418</color>
+
+    <!-- Typography Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#9E9EA8</color>
+    <color name="text_muted">#636370</color>
+
+    <!-- System Palette Overrides for Dark Material Theme -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+</resources>

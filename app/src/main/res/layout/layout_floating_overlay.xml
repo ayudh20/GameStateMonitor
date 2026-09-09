@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/overlayRoot"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- ============================================================ -->
+    <!-- COMPACT PILL MODE (Always visible, draggable across screen)   -->
+    <!-- ============================================================ -->
+    <LinearLayout
+        android:id="@+id/overlayPillView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_overlay_pill"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Drag Grip Indicator -->
+        <ImageView
+            android:id="@+id/ivDragHandle"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:contentDescription="Drag Handle"
+            android:src="@drawable/ic_drag_handle"
+            app:tint="@color/text_muted" />
+
+        <!-- Status Indicator Dot (Optimal / Moderate / High Load) -->
+        <View
+            android:id="@+id/vOverlayStatusDot"
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_status_badge"
+            android:backgroundTint="@color/status_optimal" />
+
+        <!-- Real-Time CPU Usage % -->
+        <TextView
+            android:id="@+id/tvOverlayCpu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="@color/primary_neon"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="CPU 45%" />
+
+        <!-- Separator -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:text="|"
+            android:textColor="@color/bg_card_stroke"
+            android:textSize="11sp" />
+
+        <!-- GPU Tag / Model Brief -->
+        <TextView
+            android:id="@+id/tvOverlayGpu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/secondary_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            tools:text="GPU Adreno" />
+
+        <!-- Separator -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:text="|"
+            android:textColor="@color/bg_card_stroke"
+            android:textSize="11sp" />
+
+        <!-- RAM Usage % -->
+        <TextView
+            android:id="@+id/tvOverlayRam"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/accent_purple"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="RAM 62%" />
+
+        <!-- Separator -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:layout_marginEnd="5dp"
+            android:text="|"
+            android:textColor="@color/bg_card_stroke"
+            android:textSize="11sp" />
+
+        <!-- Battery Temperature -->
+        <TextView
+            android:id="@+id/tvOverlayTemp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/accent_yellow"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            tools:text="34.5°C" />
+
+        <!-- Expand / Collapse Toggle Icon -->
+        <ImageView
+            android:id="@+id/ivOverlayToggle"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="8dp"
+            android:contentDescription="Expand Details"
+            android:src="@drawable/ic_expand"
+            app:tint="@color/text_secondary" />
+    </LinearLayout>
+
+    <!-- ============================================================ -->
+    <!-- EXPANDED DETAILED PANEL (Toggled on click)                   -->
+    <!-- ============================================================ -->
+    <LinearLayout
+        android:id="@+id/overlayExpandedPanel"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:background="@drawable/bg_overlay_expanded"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <!-- Header with Title and Close Button -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="GAMESTATE HUD"
+                android:textColor="@color/white"
+                android:textColorLink="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/ivOverlayClose"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Close HUD"
+                android:src="@drawable/ic_close" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="8dp"
+            android:background="@color/bg_card_stroke" />
+
+        <!-- Device Info -->
+        <TextView
+            android:id="@+id/tvOverlayDevice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp"
+            tools:text="Device: Google Pixel 7 Pro" />
+
+        <!-- CPU Usage & Cores -->
+        <TextView
+            android:id="@+id/tvOverlayCpuDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/primary_neon"
+            android:textSize="11sp"
+            tools:text="CPU: 45% (8 Cores @ 2.40 GHz)" />
+
+        <!-- GPU Renderer & Vendor -->
+        <TextView
+            android:id="@+id/tvOverlayGpuDetails"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/secondary_cyan"
+            android:textSize="11sp"
+            tools:text="GPU: Adreno (TM) 730" />
+
+        <!-- Battery Status & Level -->
+        <TextView
+            android:id="@+id/tvOverlayBattery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp"
+            tools:text="Battery: 85% (Discharging)" />
+
+        <!-- RAM Usage Details -->
+        <TextView
+            android:id="@+id/tvOverlayRamFull"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp"
+            tools:text="RAM: 4.8 GB / 7.6 GB" />
+
+        <!-- Storage Free -->
+        <TextView
+            android:id="@+id/tvOverlayStorage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/text_primary"
+            android:textSize="11sp"
+            tools:text="Storage Free: 54.2 GB" />
+
+        <!-- Bottom Action: Stop Service -->
+        <TextView
+            android:id="@+id/btnOverlayStop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_inner_container"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="Stop Overlay"
+            android:textColor="@color/status_high_load"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>

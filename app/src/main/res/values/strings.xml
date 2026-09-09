@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">GameState Monitor</string>
+    <string name="dashboard_subtitle">Real-Time Performance Diagnostics</string>
+
+    <!-- Status Indicators -->
+    <string name="status_title">SYSTEM STATUS</string>
+    <string name="status_optimal">OPTIMAL - READY TO GAME</string>
+    <string name="status_moderate">MODERATE LOAD</string>
+    <string name="status_high_load">HEAVY LOAD / HIGH TEMP</string>
+
+    <!-- Card Headers -->
+    <string name="header_device_info">Device Information</string>
+    <string name="header_display">Display &amp; Refresh Rate</string>
+    <string name="header_ram">RAM Memory</string>
+    <string name="header_battery">Battery Health &amp; Thermals</string>
+    <string name="header_storage">Internal Storage</string>
+    <string name="header_time">System Time</string>
+
+    <!-- Labels -->
+    <string name="label_device_model">Model:</string>
+    <string name="label_android_os">Android Version:</string>
+    <string name="label_api_level">API Level:</string>
+    <string name="label_refresh_rate">Refresh Rate:</string>
+    <string name="label_ram_usage">Memory Allocation:</string>
+    <string name="label_battery_level">Charge Level:</string>
+    <string name="label_battery_temp">Battery Temp:</string>
+    <string name="label_storage_usage">Storage Usage:</string>
+    <string name="label_last_updated">Last Updated:</string>
+
+    <!-- Buttons and Actions -->
+    <string name="btn_refresh">Refresh Statistics</string>
+    <string name="auto_refresh_hint">Auto-refreshes every 3 seconds</string>
+</resources>
