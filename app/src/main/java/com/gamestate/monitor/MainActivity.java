@@ -1,10 +1,13 @@
 package com.gamestate.monitor;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.net.Uri;
@@ -117,7 +120,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             updateRealtimeMetrics();
+            updateOverlayButtonState();
             autoRefreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
+        }
+    };
+
+    // Broadcast receiver to listen for OverlayService start/stop events
+    private final BroadcastReceiver overlayStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (OverlayService.ACTION_OVERLAY_STATE_CHANGED.equals(intent.getAction())) {
+                updateOverlayButtonState();
+            }
         }
     };
 
@@ -162,6 +176,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(OverlayService.ACTION_OVERLAY_STATE_CHANGED);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(overlayStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(overlayStateReceiver, filter);
+        }
+        updateOverlayButtonState();
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         updateRealtimeMetrics();
@@ -176,15 +202,42 @@ public class MainActivity extends AppCompatActivity {
         autoRefreshHandler.removeCallbacks(autoRefreshRunnable);
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        try {
+            unregisterReceiver(overlayStateReceiver);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
     // =========================================================================
     // Floating Overlay Handling
     // =========================================================================
 
     /**
+     * Helper to reliably check if OverlayService is running.
+     */
+    private boolean isOverlayRunning() {
+        if (OverlayService.isRunning) {
+            return true;
+        }
+        ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        if (manager != null) {
+            for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+                if (OverlayService.class.getName().equals(service.service.getClassName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Toggles the Floating Gaming HUD on or off.
      */
     private void handleOverlayToggle() {
-        if (OverlayService.isRunning) {
+        if (isOverlayRunning()) {
             // Stop the overlay
             Intent serviceIntent = new Intent(this, OverlayService.class);
             stopService(serviceIntent);
@@ -205,13 +258,16 @@ public class MainActivity extends AppCompatActivity {
      * Starts the Foreground Overlay Service.
      */
     private void startOverlayService() {
+        // Mark running immediately so the UI responds instantaneously
+        OverlayService.isRunning = true;
+        updateOverlayButtonState();
+
         Intent serviceIntent = new Intent(this, OverlayService.class);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(serviceIntent);
         } else {
             startService(serviceIntent);
         }
-        updateOverlayButtonState();
         Toast.makeText(this, "Gaming Overlay Launched! Open any game.", Toast.LENGTH_LONG).show();
     }
 
@@ -237,7 +293,9 @@ public class MainActivity extends AppCompatActivity {
      * Updates the button label and status badge depending on whether the overlay is running.
      */
     private void updateOverlayButtonState() {
-        if (OverlayService.isRunning) {
+        boolean running = isOverlayRunning();
+        OverlayService.isRunning = running;
+        if (running) {
             btnToggleOverlay.setText("Stop Gaming Overlay");
             btnToggleOverlay.setBackgroundTintList(ColorStateList.valueOf(
                     ContextCompat.getColor(this, R.color.status_high_load)

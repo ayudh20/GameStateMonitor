@@ -62,6 +62,10 @@ public class OverlayService extends Service {
     private static final String CHANNEL_ID = "channel_game_hud";
     private static final int NOTIFICATION_ID = 1001;
 
+    // Action broadcast to notify activities of overlay lifecycle changes
+    public static final String ACTION_OVERLAY_STATE_CHANGED = "com.gamestate.monitor.ACTION_OVERLAY_STATE_CHANGED";
+    public static final String EXTRA_IS_RUNNING = "is_running";
+
     // Static flag allowing MainActivity to know if the HUD is currently active
     public static boolean isRunning = false;
 
@@ -119,6 +123,7 @@ public class OverlayService extends Service {
     public void onCreate() {
         super.onCreate();
         isRunning = true;
+        sendOverlayStateBroadcast(true);
         statsManager = new DeviceStatsManager(this);
         cachedDeviceInfo = statsManager.getDeviceInfo();
         cpuMonitor = new CpuMonitor();
@@ -399,6 +404,7 @@ public class OverlayService extends Service {
      public void onDestroy() {
          super.onDestroy();
          isRunning = false;
+         sendOverlayStateBroadcast(false);
 
          // Stop updates
          updateHandler.removeCallbacks(updateRunnable);
@@ -411,5 +417,12 @@ public class OverlayService extends Service {
                  Log.e(TAG, "Error removing overlay: " + e.getMessage());
              }
          }
+     }
+
+     private void sendOverlayStateBroadcast(boolean running) {
+         Intent intent = new Intent(ACTION_OVERLAY_STATE_CHANGED);
+         intent.putExtra(EXTRA_IS_RUNNING, running);
+         intent.setPackage(getPackageName());
+         sendBroadcast(intent);
      }
 }
