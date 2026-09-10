@@ -29,6 +29,7 @@ public class PerformanceStats {
     private final float batteryTemperatureC;    // Celsius
     private final boolean isCharging;
     private final String batteryStatus;         // E.g., "Charging (AC)", "Discharging"
+    private final float batteryVoltageV;        // Volts, e.g., 4.12V
 
     // Storage Metrics (in bytes and percentage)
     private final long totalStorageBytes;
@@ -41,7 +42,7 @@ public class PerformanceStats {
     private final String formattedTimestamp;
 
     /**
-     * Full constructor for PerformanceStats snapshot.
+     * Backward-compatible constructor defaulting voltage to 4.0V.
      */
     public PerformanceStats(long totalRamBytes,
                             long availableRamBytes,
@@ -49,6 +50,23 @@ public class PerformanceStats {
                             float batteryTemperatureC,
                             boolean isCharging,
                             String batteryStatus,
+                            long totalStorageBytes,
+                            long availableStorageBytes,
+                            String formattedTimestamp) {
+        this(totalRamBytes, availableRamBytes, batteryLevel, batteryTemperatureC,
+                isCharging, batteryStatus, 4.0f, totalStorageBytes, availableStorageBytes, formattedTimestamp);
+    }
+
+    /**
+     * Full constructor for PerformanceStats snapshot including battery voltage.
+     */
+    public PerformanceStats(long totalRamBytes,
+                            long availableRamBytes,
+                            int batteryLevel,
+                            float batteryTemperatureC,
+                            boolean isCharging,
+                            String batteryStatus,
+                            float batteryVoltageV,
                             long totalStorageBytes,
                             long availableStorageBytes,
                             String formattedTimestamp) {
@@ -64,6 +82,7 @@ public class PerformanceStats {
         this.batteryTemperatureC = batteryTemperatureC;
         this.isCharging = isCharging;
         this.batteryStatus = batteryStatus != null ? batteryStatus : "Unknown";
+        this.batteryVoltageV = batteryVoltageV > 0 ? batteryVoltageV : 4.0f;
 
         this.totalStorageBytes = totalStorageBytes;
         this.availableStorageBytes = availableStorageBytes;
@@ -127,6 +146,10 @@ public class PerformanceStats {
 
     public String getBatteryStatus() {
         return batteryStatus;
+    }
+
+    public float getBatteryVoltageV() {
+        return batteryVoltageV;
     }
 
     public long getTotalStorageBytes() {

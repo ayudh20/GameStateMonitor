@@ -1,28 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Core Brand Colors (Gaming Dark Mode) -->
-    <color name="primary_neon">#00E676</color>
-    <color name="primary_neon_glow">#3300E676</color>
-    <color name="secondary_cyan">#00B0FF</color>
-    <color name="accent_cyan">#00B0FF</color>
+    <color name="primary_neon">#00D2E0</color>
+    <color name="primary_neon_glow">#3300D2E0</color>
+    <color name="secondary_cyan">#00D2E0</color>
+    <color name="accent_cyan">#00D2E0</color>
     <color name="accent_purple">#7C4DFF</color>
     <color name="accent_yellow">#FFD600</color>
+
+    <!-- Figma 1:1 Palette Colors -->
+    <color name="figma_cyan">#00D2E0</color>
+    <color name="figma_cyan_dot">#00E5FF</color>
+    <color name="figma_cyan_badge_bg">#071F24</color>
+    <color name="figma_bg_dark">#000000</color>
+    <color name="figma_card_bg">#0D0D11</color>
+    <color name="figma_card_stroke">#1C1C24</color>
+    <color name="figma_progress_track">#16161E</color>
+    <color name="figma_text_primary">#FFFFFF</color>
+    <color name="figma_text_muted">#8A8A98</color>
+    <color name="figma_green_health">#00E676</color>
+    <color name="figma_amber_temp">#FFA726</color>
+    <color name="figma_chip_active_bg">#091E24</color>
+    <color name="figma_chip_inactive_bg">#101014</color>
+    <color name="figma_chip_inactive_stroke">#1C1C24</color>
 
     <!-- Status Colors -->
     <color name="status_optimal">#00E676</color>
     <color name="status_moderate">#FF9100</color>
     <color name="status_high_load">#FF5252</color>
 
-    <!-- Backgrounds and Surfaces (Pure AMOLED / OLED Black) -->
+    <!-- Backgrounds and Surfaces -->
     <color name="bg_dark">#000000</color>
-    <color name="bg_card">#050505</color>
-    <color name="bg_card_stroke">#1C1D24</color>
+    <color name="bg_card">#0D0D11</color>
+    <color name="bg_card_stroke">#1C1C24</color>
     <color name="bg_inner_container">#0A0A0E</color>
-    <color name="bg_progress_track">#141418</color>
+    <color name="bg_progress_track">#16161E</color>
 
     <!-- Typography Colors -->
     <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#9E9EA8</color>
+    <color name="text_secondary">#8A8A98</color>
     <color name="text_muted">#636370</color>
 
     <!-- System Palette Overrides for Dark Material Theme -->

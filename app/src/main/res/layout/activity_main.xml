@@ -4,76 +4,54 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_dark"
+    android:background="@color/figma_bg_dark"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="@dimen/spacing_normal">
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="24dp">
 
         <!-- ============================================================ -->
-        <!-- HEADER SECTION: Title, Subtitle, Status Badge, Last Updated   -->
+        <!-- HEADER SECTION: App Title with Glowing Dot & Subtitle         -->
         <!-- ============================================================ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginBottom="@dimen/spacing_normal">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ImageView
-                    android:id="@+id/ivAppLogo"
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="12dp"
-                    android:contentDescription="GameState Logo"
-                    android:src="@drawable/ic_app_logo" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvAppTitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:letterSpacing="0.05"
-                        android:text="@string/app_name"
-                        android:textColor="@color/white"
-                        android:textSize="@dimen/text_hero"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvAppSubtitle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="@string/dashboard_subtitle"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="@dimen/text_body" />
-                </LinearLayout>
-            </LinearLayout>
-
-
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
             <TextView
-                android:id="@+id/tvLastUpdated"
+                android:id="@+id/tvAppTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="@dimen/spacing_small"
-                android:text="Last Updated: --:--:--"
-                android:textColor="@color/text_muted"
-                android:textSize="@dimen/text_caption" />
+                android:text="GameState Monitor"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/vHeaderStatusDot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_dot_cyan" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvAppSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:letterSpacing="0.06"
+            android:text="REAL-TIME PERFORMANCE DIAGNOSTICS"
+            android:textColor="@color/figma_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
 
         <!-- ============================================================ -->
         <!-- CARD 1: DEVICE INFORMATION                                   -->
@@ -81,50 +59,58 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="16dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Squircle Badge + Title -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/header_device_info"
-                        android:src="@drawable/ic_device"
-                        app:tint="@color/secondary_cyan" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Device Info"
+                            android:src="@drawable/ic_device"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
-                        android:text="@string/header_device_info"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:layout_marginStart="12dp"
+                        android:text="Device Information"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <!-- Key-Value Rows -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
 
-                    <!-- Device Model -->
+                    <!-- Model Name -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -134,800 +120,709 @@
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/label_device_model"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="Model Name"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
                             android:id="@+id/tvDeviceModel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
-                            android:textSize="@dimen/text_body"
+                            android:textColor="@color/white"
+                            android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:text="Google Pixel 7 Pro" />
+                            tools:text="ROG Phone 8 Pro" />
                     </LinearLayout>
 
-                    <!-- Android Version -->
+                    <!-- OS Engine -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
+                        android:layout_marginTop="8dp"
                         android:orientation="horizontal">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/label_android_os"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="OS Engine"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
-                            android:id="@+id/tvAndroidVersion"
+                            android:id="@+id/tvDeviceAndroidVersion"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/primary_neon"
-                            android:textSize="@dimen/text_body"
+                            android:textColor="@color/white"
+                            android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:text="Android 14" />
+                            tools:text="Android 14 (Kernel 6.1)" />
                     </LinearLayout>
 
-                    <!-- API Level -->
+                    <!-- Active Diagnostic Run -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
+                        android:layout_marginTop="8dp"
                         android:orientation="horizontal">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/label_api_level"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="Active Diagnostic Run"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
-                            android:id="@+id/tvApiLevel"
+                            android:id="@+id/tvActiveDiagnosticRun"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
-                            android:textSize="@dimen/text_body"
-                            tools:text="API 34" />
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="04h 12m 19s" />
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 2: CPU PERFORMANCE MONITOR                               -->
+        <!-- CARD 2: CPU PROCESSOR                                         -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Badge + Title + Load % -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="CPU Usage"
-                        android:src="@drawable/ic_cpu"
-                        app:tint="@color/primary_neon" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="CPU"
+                            android:src="@drawable/ic_pulse"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
                         android:text="CPU Processor"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvCpuLoadPercentage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="42% LOAD" />
                 </LinearLayout>
 
+                <!-- Thin Sleek Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/pbCpuLoad"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="42"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <!-- Bottom Row: Chipset Name + Cores Active -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
 
-                    <!-- CPU Usage % Row -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tvCpuName"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="Snapdragon 8 Gen 3" />
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="CPU Utilization"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="@dimen/text_body" />
-
-                            <TextView
-                                android:id="@+id/tvCpuCoresAndFreq"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="8 Cores @ 2.40 GHz"
-                                android:textColor="@color/text_muted"
-                                android:textSize="@dimen/text_caption" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvCpuUsage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/primary_neon"
-                            android:textSize="@dimen/text_hero"
-                            android:textStyle="bold"
-                            tools:text="45%" />
-                    </LinearLayout>
-
-                    <ProgressBar
-                        android:id="@+id/pbCpuUsage"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:max="100"
-                        android:progress="45"
-                        android:progressTint="@color/primary_neon" />
+                    <TextView
+                        android:id="@+id/tvCpuCoresActive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="8 Cores Active" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 3: GPU GRAPHICS PROCESSOR                                -->
+        <!-- CARD 3: GPU GRAPHICS                                          -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Badge + Title + Util % -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="GPU Graphics"
-                        android:src="@drawable/ic_gpu"
-                        app:tint="@color/secondary_cyan" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="GPU"
+                            android:src="@drawable/ic_bolt"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
                         android:text="GPU Graphics"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvGpuUtilPercentage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="58% UTIL" />
                 </LinearLayout>
 
+                <!-- Thin Sleek Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/pbGpuUtil"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="58"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <!-- Sub-row: Renderer + Frequency -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
 
-                    <!-- GPU Usage % Row -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tvGpuRenderer"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="Adreno 750 Core" />
 
-                        <LinearLayout
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="GPU Utilization"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="@dimen/text_body" />
-
-                            <TextView
-                                android:id="@+id/tvGpuUsageNote"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Hardware Graphics Engine"
-                                android:textColor="@color/text_muted"
-                                android:textSize="@dimen/text_caption" />
-                        </LinearLayout>
-
-                        <TextView
-                            android:id="@+id/tvGpuUsage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/secondary_cyan"
-                            android:textSize="@dimen/text_hero"
-                            android:textStyle="bold"
-                            tools:text="38%" />
-                    </LinearLayout>
-
-                    <ProgressBar
-                        android:id="@+id/pbGpuUsage"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:max="100"
-                        android:progress="38"
-                        android:progressTint="@color/secondary_cyan" />
-
-                    <!-- Divider -->
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="@dimen/spacing_medium"
-                        android:layout_marginBottom="@dimen/spacing_small"
-                        android:background="@color/bg_card_stroke" />
-
-                    <!-- GPU Renderer -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tvGpuFrequency"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="710 MHz" />
+                </LinearLayout>
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Renderer"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                <!-- Bottom row: Display Refresh Rate -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
 
-                        <TextView
-                            android:id="@+id/tvGpuRenderer"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/secondary_cyan"
-                            android:textSize="@dimen/text_body"
-                            android:textStyle="bold"
-                            tools:text="Adreno (TM) 730" />
-                    </LinearLayout>
-
-                    <!-- GPU Vendor -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:orientation="horizontal">
+                        android:layout_weight="1"
+                        android:text="Display Refresh Rate"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="13sp" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Vendor"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
-
-                        <TextView
-                            android:id="@+id/tvGpuVendor"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
-                            android:textSize="@dimen/text_body"
-                            tools:text="Qualcomm" />
-                    </LinearLayout>
-
-                    <!-- OpenGL ES Version -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:id="@+id/tvDisplayRefreshRate"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="OpenGL ES"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
-
-                        <TextView
-                            android:id="@+id/tvGpuOpengl"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
-                            android:textSize="@dimen/text_body"
-                            tools:text="OpenGL ES 3.2" />
-                    </LinearLayout>
-
-                    <!-- Display Refresh Rate -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Display Refresh Rate"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
-
-                        <TextView
-                            android:id="@+id/tvRefreshRate"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/primary_neon"
-                            android:textSize="@dimen/text_body"
-                            android:textStyle="bold"
-                            tools:text="120 Hz" />
-                    </LinearLayout>
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        tools:text="60 Hz" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 3: RAM MEMORY USAGE                                      -->
+        <!-- CARD 4: RAM MEMORY                                            -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Badge + Title -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/header_ram"
-                        android:src="@drawable/ic_ram"
-                        app:tint="@color/accent_purple" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="RAM"
+                            android:src="@drawable/ic_database"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
-                        android:text="@string/header_ram"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:layout_marginStart="12dp"
+                        android:text="RAM Memory"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <!-- Sub-row: Used / Total on Left, % on Right -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvRamDetails"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Used: -- / Total: --"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
-
-                        <TextView
-                            android:id="@+id/tvRamPercentage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/accent_purple"
-                            android:textSize="@dimen/text_heading"
-                            android:textStyle="bold"
-                            tools:text="68%" />
-                    </LinearLayout>
-
-                    <ProgressBar
-                        android:id="@+id/pbRamUsage"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:max="100"
-                        android:progress="68"
-                        android:progressTint="@color/accent_purple" />
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvRamAvailable"
+                        android:id="@+id/tvRamUsageValues"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        tools:text="Used: 4.6 GB / Total: 5.4 GB" />
+
+                    <TextView
+                        android:id="@+id/tvRamPercentage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_micro"
-                        android:text="Available: --"
-                        android:textColor="@color/text_muted"
-                        android:textSize="@dimen/text_caption" />
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="85%" />
                 </LinearLayout>
+
+                <!-- Thin Sleek Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/pbRamUsage"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="8dp"
+                    android:max="100"
+                    android:progress="85"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <!-- Bottom row: Available -->
+                <TextView
+                    android:id="@+id/tvRamAvailable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textColor="@color/figma_text_muted"
+                    android:textSize="12sp"
+                    tools:text="Available: 829.9 MB" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 4: BATTERY HEALTH & THERMALS                             -->
+        <!-- CARD 5: BATTERY HEALTH & THERMALS                             -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Badge + Title -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/header_battery"
-                        android:src="@drawable/ic_battery"
-                        app:tint="@color/primary_neon" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Battery"
+                            android:src="@drawable/ic_trending_up"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
-                        android:text="@string/header_battery"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:layout_marginStart="12dp"
+                        android:text="Battery Health &amp; Thermals"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <!-- Metrics Rows -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
 
-                    <!-- Battery Level Row -->
+                    <!-- Row 1: Battery Level -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/tvBatteryStatus"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Battery: Discharging"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="Battery Level"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
-                            android:id="@+id/tvBatteryLevel"
+                            android:id="@+id/tvBatteryLevelState"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/primary_neon"
-                            android:textSize="@dimen/text_heading"
+                            android:textColor="@color/figma_green_health"
+                            android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:text="85%" />
+                            tools:text="85% (Discharging)" />
                     </LinearLayout>
 
-                    <ProgressBar
-                        android:id="@+id/pbBatteryLevel"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:max="100"
-                        android:progress="85"
-                        android:progressTint="@color/primary_neon" />
-
-                    <!-- Battery Temperature Row -->
+                    <!-- Row 2: Core Temperature -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_medium"
+                        android:layout_marginTop="8dp"
                         android:orientation="horizontal">
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="@string/label_battery_temp"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="Core Temperature"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
                             android:id="@+id/tvBatteryTemp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
-                            android:textSize="@dimen/text_body"
+                            android:textColor="@color/figma_amber_temp"
+                            android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:text="34.5 °C (94.1 °F)" />
+                            tools:text="38.5 °C" />
                     </LinearLayout>
-                </LinearLayout>
-            </LinearLayout>
-        </com.google.android.material.card.MaterialCardView>
 
-        <!-- ============================================================ -->
-        <!-- CARD 5: INTERNAL STORAGE USAGE                                -->
-        <!-- ============================================================ -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_large"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/bg_card_stroke"
-            app:strokeWidth="@dimen/card_stroke_width">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="@string/header_storage"
-                        android:src="@drawable/ic_storage"
-                        app:tint="@color/status_moderate" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
-                        android:text="@string/header_storage"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_medium">
-
+                    <!-- Row 3: Charge Voltage -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
                         android:orientation="horizontal">
 
                         <TextView
-                            android:id="@+id/tvStorageDetails"
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
-                            android:text="Used: -- / Total: --"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="@dimen/text_body" />
+                            android:text="Charge Voltage"
+                            android:textColor="@color/figma_text_muted"
+                            android:textSize="13sp" />
 
                         <TextView
-                            android:id="@+id/tvStoragePercentage"
+                            android:id="@+id/tvBatteryVoltage"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/status_moderate"
-                            android:textSize="@dimen/text_heading"
+                            android:textColor="@color/white"
+                            android:textSize="13sp"
                             android:textStyle="bold"
-                            tools:text="54%" />
+                            tools:text="4.12 V" />
                     </LinearLayout>
-
-                    <ProgressBar
-                        android:id="@+id/pbStorageUsage"
-                        style="?android:attr/progressBarStyleHorizontal"
-                        android:layout_width="match_parent"
-                        android:layout_height="10dp"
-                        android:layout_marginTop="@dimen/spacing_small"
-                        android:max="100"
-                        android:progress="54"
-                        android:progressTint="@color/status_moderate" />
-
-                    <TextView
-                        android:id="@+id/tvStorageFree"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/spacing_micro"
-                        android:text="Free: --"
-                        android:textColor="@color/text_muted"
-                        android:textSize="@dimen/text_caption" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 6: FLOATING GAMING OVERLAY HUD                           -->
+        <!-- CARD 6: INTERNAL STORAGE                                      -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing_medium"
-            app:cardCornerRadius="@dimen/card_corner_radius"
-            app:cardElevation="@dimen/card_elevation"
-            app:strokeColor="@color/primary_neon"
-            app:strokeWidth="@dimen/card_stroke_width">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_card_stroke"
+            app:strokeWidth="1dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing_normal">
+                android:padding="16dp">
 
+                <!-- Header Row: Badge + Title + Used % -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_vertical"
                     android:orientation="horizontal">
 
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="Gaming Overlay"
-                        android:src="@drawable/ic_display"
-                        app:tint="@color/primary_neon" />
+                    <FrameLayout
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_badge_squircle">
+
+                        <ImageView
+                            android:layout_width="20dp"
+                            android:layout_height="20dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="Storage"
+                            android:src="@drawable/ic_folder"
+                            app:tint="@color/figma_cyan" />
+                    </FrameLayout>
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/spacing_small"
+                        android:layout_marginStart="12dp"
                         android:layout_weight="1"
-                        android:text="Floating Gaming HUD"
-                        android:textColor="@color/text_primary"
-                        android:textSize="@dimen/text_title"
+                        android:text="Internal Storage"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
-                        android:id="@+id/tvOverlayBadgeStatus"
+                        android:id="@+id/tvStoragePercentage"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:background="@drawable/bg_status_badge"
-                        android:text="INACTIVE"
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        tools:text="87% USED" />
                 </LinearLayout>
 
-                <TextView
+                <!-- Thin Sleek Progress Bar -->
+                <ProgressBar
+                    android:id="@+id/pbStorageUsage"
+                    style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_small"
-                    android:text="Display real-time CPU % and GPU info alongside RAM and Thermals as a draggable HUD floating over any game."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="@dimen/text_caption" />
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="87"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnToggleOverlay"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="@dimen/spacing_medium"
-                    android:text="Launch Gaming Overlay"
-                    android:textColor="@color/bg_dark"
-                    android:textSize="@dimen/text_body"
-                    android:textStyle="bold"
-                    app:backgroundTint="@color/primary_neon"
-                    app:cornerRadius="@dimen/badge_corner_radius"
-                    app:icon="@drawable/ic_display"
-                    app:iconGravity="textStart"
-                    app:iconTint="@color/bg_dark" />
-
-                <!-- In-Game Hook Mode & ADB Unlock -->
+                <!-- Bottom row: Used / Total on Left, Free on Right -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/spacing_small"
-                    android:background="@drawable/bg_inner_container"
-                    android:orientation="vertical"
-                    android:padding="@dimen/spacing_small">
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
 
                     <TextView
-                        android:id="@+id/tvDumpStatus"
-                        android:layout_width="wrap_content"
+                        android:id="@+id/tvStorageUsageValues"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="In-Game Hook: Active Display Pacing"
-                        android:textColor="@color/secondary_cyan"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="Used: 112 GB / 128 GB" />
 
                     <TextView
-                        android:id="@+id/tvDumpHint"
+                        android:id="@+id/tvStorageAvailable"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="Run one-time ADB command to unlock deep SurfaceFlinger game engine hooking."
-                        android:textColor="@color/text_muted"
-                        android:textSize="10sp" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnCopyAdbCommand"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="match_parent"
-                        android:layout_height="36dp"
-                        android:layout_marginTop="6dp"
-                        android:padding="0dp"
-                        android:text="Copy ADB Unlock Command"
-                        android:textColor="@color/primary_neon"
-                        android:textSize="11sp"
-                        app:strokeColor="@color/primary_neon" />
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="16 GB Free" />
                 </LinearLayout>
-
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- DIAGNOSTIC HUD OVERLAYS SECTION                               -->
+        <!-- ============================================================ -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="10dp"
+            android:letterSpacing="0.08"
+            android:text="DIAGNOSTIC HUD OVERLAYS"
+            android:textColor="@color/figma_text_muted"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <!-- FPS Overlay Toggle Chip -->
+            <LinearLayout
+                android:id="@+id/btnToggleOverlayFps"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_chip_figma_active"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <ImageView
+                    android:id="@+id/ivOverlayFpsIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_check_small"
+                    app:tint="@color/figma_cyan" />
+
+                <TextView
+                    android:id="@+id/tvOverlayFpsText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="FPS Overlay"
+                    android:textColor="@color/white"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Temp Overlay Toggle Chip -->
+            <LinearLayout
+                android:id="@+id/btnToggleOverlayTemp"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_chip_figma_inactive"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp">
+
+                <ImageView
+                    android:id="@+id/ivOverlayTempIcon"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:src="@drawable/ic_minus_small"
+                    app:tint="@color/figma_text_muted" />
+
+                <TextView
+                    android:id="@+id/tvOverlayTempText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Temp Overlay"
+                    android:textColor="@color/figma_text_muted"
+                    android:textSize="13sp" />
+            </LinearLayout>
+        </LinearLayout>
 
         <!-- ============================================================ -->
         <!-- ACTION BUTTON: REFRESH STATISTICS                             -->
@@ -935,27 +830,17 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRefresh"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="@string/btn_refresh"
-            android:textColor="@color/bg_dark"
-            android:textSize="@dimen/text_title"
+            android:layout_height="52dp"
+            android:layout_marginTop="16dp"
+            android:text="Refresh Statistics"
+            android:textColor="@color/black"
+            android:textSize="15sp"
             android:textStyle="bold"
-            app:backgroundTint="@color/primary_neon"
-            app:cornerRadius="@dimen/badge_corner_radius"
+            app:backgroundTint="@color/figma_cyan"
+            app:cornerRadius="14dp"
             app:icon="@drawable/ic_refresh"
             app:iconGravity="textStart"
-            app:iconTint="@color/bg_dark" />
-
-        <TextView
-            android:id="@+id/tvAutoRefreshNotice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="@dimen/spacing_small"
-            android:layout_marginBottom="@dimen/spacing_normal"
-            android:text="@string/auto_refresh_hint"
-            android:textColor="@color/text_muted"
-            android:textSize="@dimen/text_caption" />
+            app:iconTint="@color/black" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

@@ -84,6 +84,7 @@ public class DeviceStatsManager {
         // 2. Fetch Battery status & Thermals via sticky system broadcast
         int batteryLevel = 0;
         float batteryTempC = 0.0f;
+        float batteryVoltageV = 4.0f;
         boolean isCharging = false;
         String batteryStatusText = "Unknown";
 
@@ -104,6 +105,12 @@ public class DeviceStatsManager {
                 // Battery temperature is provided by Android in tenths of a degree Celsius (e.g. 345 = 34.5°C)
                 int rawTemp = batteryStatus.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0);
                 batteryTempC = rawTemp / 10.0f;
+
+                // Battery voltage in millivolts (e.g. 4120 mV = 4.12 V)
+                int rawVoltage = batteryStatus.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);
+                if (rawVoltage > 0) {
+                    batteryVoltageV = rawVoltage / 1000.0f;
+                }
 
                 // Charging state and power source
                 int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
@@ -156,6 +163,7 @@ public class DeviceStatsManager {
                 batteryTempC,
                 isCharging,
                 batteryStatusText,
+                batteryVoltageV,
                 totalStorage,
                 availableStorage,
                 formattedTimestamp

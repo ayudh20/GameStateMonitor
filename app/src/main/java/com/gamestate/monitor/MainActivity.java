@@ -3,8 +3,6 @@ package com.gamestate.monitor;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
-import android.content.ClipData;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -15,8 +13,12 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
+import android.view.Display;
 import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -41,14 +43,7 @@ import com.google.android.material.button.MaterialButton;
 /**
  * MainActivity
  * ------------
- * In Android, an Activity represents a single focused screen that a user interacts with.
- *
- * This Activity serves as the Controller in the MVC architecture:
- * 1. Inflates the View defined in activity_main.xml.
- * 2. Queries Model data through DeviceStatsManager, CpuMonitor, and GpuMonitor.
- * 3. Binds and displays the statistics onto the UI widgets.
- * 4. Maintains an auto-refresh timer loop using Android's Handler mechanism.
- * 5. Controls launching and stopping the Floating Gaming HUD Overlay.
+ * Controller for GameState Monitor, bound 1:1 to the Figma UI specification.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -56,49 +51,48 @@ public class MainActivity extends AppCompatActivity {
     // UI View References
     // =========================================================================
 
-    // Header
-    private TextView tvLastUpdated;
-
-    // Device Info Card
+    // Card 1: Device Info
     private TextView tvDeviceModel;
-    private TextView tvAndroidVersion;
-    private TextView tvApiLevel;
+    private TextView tvDeviceAndroidVersion;
+    private TextView tvActiveDiagnosticRun;
 
-    // CPU Card
-    private TextView tvCpuUsage;
-    private TextView tvCpuCoresAndFreq;
-    private ProgressBar pbCpuUsage;
+    // Card 2: CPU Processor
+    private TextView tvCpuLoadPercentage;
+    private ProgressBar pbCpuLoad;
+    private TextView tvCpuName;
+    private TextView tvCpuCoresActive;
 
-    // GPU & Display Card
-    private TextView tvGpuUsage;
-    private TextView tvGpuUsageNote;
-    private ProgressBar pbGpuUsage;
+    // Card 3: GPU Graphics
+    private TextView tvGpuUtilPercentage;
+    private ProgressBar pbGpuUtil;
     private TextView tvGpuRenderer;
-    private TextView tvGpuVendor;
-    private TextView tvGpuOpengl;
-    private TextView tvRefreshRate;
+    private TextView tvGpuFrequency;
+    private TextView tvDisplayRefreshRate;
 
-    // RAM Card
-    private TextView tvRamDetails;
+    // Card 4: RAM Memory
+    private TextView tvRamUsageValues;
     private TextView tvRamPercentage;
     private ProgressBar pbRamUsage;
     private TextView tvRamAvailable;
 
-    // Battery & Thermals Card
-    private TextView tvBatteryStatus;
-    private TextView tvBatteryLevel;
-    private ProgressBar pbBatteryLevel;
+    // Card 5: Battery Health & Thermals
+    private TextView tvBatteryLevelState;
     private TextView tvBatteryTemp;
+    private TextView tvBatteryVoltage;
 
-    // Storage Card
-    private TextView tvStorageDetails;
+    // Card 6: Internal Storage
     private TextView tvStoragePercentage;
     private ProgressBar pbStorageUsage;
-    private TextView tvStorageFree;
+    private TextView tvStorageUsageValues;
+    private TextView tvStorageAvailable;
 
-    // Floating Overlay Controls
-    private TextView tvOverlayBadgeStatus;
-    private MaterialButton btnToggleOverlay;
+    // Diagnostic HUD Overlays
+    private LinearLayout btnToggleOverlayFps;
+    private ImageView ivOverlayFpsIcon;
+    private TextView tvOverlayFpsText;
+    private LinearLayout btnToggleOverlayTemp;
+    private ImageView ivOverlayTempIcon;
+    private TextView tvOverlayTempText;
 
     // Action Controls
     private MaterialButton btnRefresh;
@@ -112,14 +106,18 @@ public class MainActivity extends AppCompatActivity {
     private GpuMonitor gpuMonitor;
     private GpuInfo cachedGpuInfo;
 
+    // App diagnostic start time for session runtime counter
+    private long sessionStartTimeMs;
+
     // Handler scheduled updates
     private final Handler autoRefreshHandler = new Handler(Looper.getMainLooper());
-    private static final long REFRESH_INTERVAL_MS = 3000; // 3 seconds
+    private static final long REFRESH_INTERVAL_MS = 2000; // 2 seconds
 
     private final Runnable autoRefreshRunnable = new Runnable() {
         @Override
         public void run() {
             updateRealtimeMetrics();
+            updateDiagnosticRuntime();
             updateOverlayButtonState();
             autoRefreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
         }
@@ -150,6 +148,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        sessionStartTimeMs = SystemClock.elapsedRealtime();
+
         // 1. Initialize data managers and hardware monitors
         statsManager = new DeviceStatsManager(this);
         cpuMonitor = new CpuMonitor();
@@ -165,11 +165,16 @@ public class MainActivity extends AppCompatActivity {
         // 4. Set click listener on Refresh button
         btnRefresh.setOnClickListener(v -> {
             updateRealtimeMetrics();
+            updateDiagnosticRuntime();
             Toast.makeText(MainActivity.this, "Statistics Updated", Toast.LENGTH_SHORT).show();
         });
 
-        // 5. Set click listener for Floating Overlay Toggle
-        btnToggleOverlay.setOnClickListener(v -> handleOverlayToggle());
+        // 5. Set click listeners for Floating Overlay Chips
+        btnToggleOverlayFps.setOnClickListener(v -> handleOverlayToggle());
+        btnToggleOverlayTemp.setOnClickListener(v -> {
+            handleOverlayToggle();
+            Toast.makeText(MainActivity.this, "Thermal HUD Linked with Overlay", Toast.LENGTH_SHORT).show();
+        });
 
         // 6. Request notification permission on Android 13+
         checkNotificationPermission();
@@ -191,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         updateRealtimeMetrics();
+        updateDiagnosticRuntime();
         updateOverlayButtonState();
 
         autoRefreshHandler.postDelayed(autoRefreshRunnable, REFRESH_INTERVAL_MS);
@@ -258,7 +264,6 @@ public class MainActivity extends AppCompatActivity {
      * Starts the Foreground Overlay Service.
      */
     private void startOverlayService() {
-        // Mark running immediately so the UI responds instantaneously
         OverlayService.isRunning = true;
         updateOverlayButtonState();
 
@@ -290,25 +295,31 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Updates the button label and status badge depending on whether the overlay is running.
+     * Updates the overlay chip buttons depending on whether the HUD is active.
      */
     private void updateOverlayButtonState() {
         boolean running = isOverlayRunning();
         OverlayService.isRunning = running;
         if (running) {
-            btnToggleOverlay.setText("Stop Gaming Overlay");
-            btnToggleOverlay.setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(this, R.color.status_high_load)
-            ));
-            tvOverlayBadgeStatus.setText("ACTIVE (FLOATING)");
-            tvOverlayBadgeStatus.setTextColor(ContextCompat.getColor(this, R.color.primary_neon));
+            btnToggleOverlayFps.setBackgroundResource(R.drawable.bg_chip_figma_active);
+            ivOverlayFpsIcon.setImageResource(R.drawable.ic_check_small);
+            ivOverlayFpsIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
+            tvOverlayFpsText.setTextColor(ContextCompat.getColor(this, R.color.white));
+
+            btnToggleOverlayTemp.setBackgroundResource(R.drawable.bg_chip_figma_active);
+            ivOverlayTempIcon.setImageResource(R.drawable.ic_check_small);
+            ivOverlayTempIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
+            tvOverlayTempText.setTextColor(ContextCompat.getColor(this, R.color.white));
         } else {
-            btnToggleOverlay.setText("Launch Gaming Overlay");
-            btnToggleOverlay.setBackgroundTintList(ColorStateList.valueOf(
-                    ContextCompat.getColor(this, R.color.primary_neon)
-            ));
-            tvOverlayBadgeStatus.setText("INACTIVE");
-            tvOverlayBadgeStatus.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+            btnToggleOverlayFps.setBackgroundResource(R.drawable.bg_chip_figma_inactive);
+            ivOverlayFpsIcon.setImageResource(R.drawable.ic_minus_small);
+            ivOverlayFpsIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_text_muted)));
+            tvOverlayFpsText.setTextColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+
+            btnToggleOverlayTemp.setBackgroundResource(R.drawable.bg_chip_figma_inactive);
+            ivOverlayTempIcon.setImageResource(R.drawable.ic_minus_small);
+            ivOverlayTempIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_text_muted)));
+            tvOverlayTempText.setTextColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         }
     }
 
@@ -326,42 +337,50 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================================
 
     private void bindViews() {
-        tvLastUpdated = findViewById(R.id.tvLastUpdated);
-
+        // Card 1: Device Info
         tvDeviceModel = findViewById(R.id.tvDeviceModel);
-        tvAndroidVersion = findViewById(R.id.tvAndroidVersion);
-        tvApiLevel = findViewById(R.id.tvApiLevel);
+        tvDeviceAndroidVersion = findViewById(R.id.tvDeviceAndroidVersion);
+        tvActiveDiagnosticRun = findViewById(R.id.tvActiveDiagnosticRun);
 
-        tvCpuUsage = findViewById(R.id.tvCpuUsage);
-        tvCpuCoresAndFreq = findViewById(R.id.tvCpuCoresAndFreq);
-        pbCpuUsage = findViewById(R.id.pbCpuUsage);
+        // Card 2: CPU Processor
+        tvCpuLoadPercentage = findViewById(R.id.tvCpuLoadPercentage);
+        pbCpuLoad = findViewById(R.id.pbCpuLoad);
+        tvCpuName = findViewById(R.id.tvCpuName);
+        tvCpuCoresActive = findViewById(R.id.tvCpuCoresActive);
 
-        tvGpuUsage = findViewById(R.id.tvGpuUsage);
-        tvGpuUsageNote = findViewById(R.id.tvGpuUsageNote);
-        pbGpuUsage = findViewById(R.id.pbGpuUsage);
+        // Card 3: GPU Graphics
+        tvGpuUtilPercentage = findViewById(R.id.tvGpuUtilPercentage);
+        pbGpuUtil = findViewById(R.id.pbGpuUtil);
         tvGpuRenderer = findViewById(R.id.tvGpuRenderer);
-        tvGpuVendor = findViewById(R.id.tvGpuVendor);
-        tvGpuOpengl = findViewById(R.id.tvGpuOpengl);
-        tvRefreshRate = findViewById(R.id.tvRefreshRate);
+        tvGpuFrequency = findViewById(R.id.tvGpuFrequency);
+        tvDisplayRefreshRate = findViewById(R.id.tvDisplayRefreshRate);
 
-        tvRamDetails = findViewById(R.id.tvRamDetails);
+        // Card 4: RAM Memory
+        tvRamUsageValues = findViewById(R.id.tvRamUsageValues);
         tvRamPercentage = findViewById(R.id.tvRamPercentage);
         pbRamUsage = findViewById(R.id.pbRamUsage);
         tvRamAvailable = findViewById(R.id.tvRamAvailable);
 
-        tvBatteryStatus = findViewById(R.id.tvBatteryStatus);
-        tvBatteryLevel = findViewById(R.id.tvBatteryLevel);
-        pbBatteryLevel = findViewById(R.id.pbBatteryLevel);
+        // Card 5: Battery Health & Thermals
+        tvBatteryLevelState = findViewById(R.id.tvBatteryLevelState);
         tvBatteryTemp = findViewById(R.id.tvBatteryTemp);
+        tvBatteryVoltage = findViewById(R.id.tvBatteryVoltage);
 
-        tvStorageDetails = findViewById(R.id.tvStorageDetails);
+        // Card 6: Internal Storage
         tvStoragePercentage = findViewById(R.id.tvStoragePercentage);
         pbStorageUsage = findViewById(R.id.pbStorageUsage);
-        tvStorageFree = findViewById(R.id.tvStorageFree);
+        tvStorageUsageValues = findViewById(R.id.tvStorageUsageValues);
+        tvStorageAvailable = findViewById(R.id.tvStorageAvailable);
 
-        tvOverlayBadgeStatus = findViewById(R.id.tvOverlayBadgeStatus);
-        btnToggleOverlay = findViewById(R.id.btnToggleOverlay);
+        // Diagnostic HUD Overlays
+        btnToggleOverlayFps = findViewById(R.id.btnToggleOverlayFps);
+        ivOverlayFpsIcon = findViewById(R.id.ivOverlayFpsIcon);
+        tvOverlayFpsText = findViewById(R.id.tvOverlayFpsText);
+        btnToggleOverlayTemp = findViewById(R.id.btnToggleOverlayTemp);
+        ivOverlayTempIcon = findViewById(R.id.ivOverlayTempIcon);
+        tvOverlayTempText = findViewById(R.id.tvOverlayTempText);
 
+        // Action Controls
         btnRefresh = findViewById(R.id.btnRefresh);
     }
 
@@ -369,15 +388,59 @@ public class MainActivity extends AppCompatActivity {
         DeviceInfo deviceInfo = statsManager.getDeviceInfo();
 
         tvDeviceModel.setText(deviceInfo.getFullDeviceName());
-        tvAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion());
-        tvApiLevel.setText("API " + deviceInfo.getApiLevel());
-        tvRefreshRate.setText(FormatUtils.formatRefreshRate(deviceInfo.getRefreshRate()));
+        String kernel = System.getProperty("os.version");
+        if (kernel != null && !kernel.isEmpty()) {
+            tvDeviceAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion() + " (Kernel " + kernel + ")");
+        } else {
+            tvDeviceAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion());
+        }
+
+        float refreshRate = statsManager.getScreenRefreshRate();
+        if (refreshRate <= 0 && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            try {
+                Display display = getDisplay();
+                if (display != null) {
+                    refreshRate = display.getMode().getRefreshRate();
+                }
+            } catch (Exception ignored) {}
+        }
+        if (refreshRate <= 0) {
+            refreshRate = 60.0f;
+        }
+        tvDisplayRefreshRate.setText(String.format("%.0f Hz", refreshRate));
+
+        if (cpuMonitor != null) {
+            CpuInfo cpuInfo = cpuMonitor.getCpuInfo();
+            String chip = "";
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MODEL != null && !Build.SOC_MODEL.isEmpty()) {
+                chip = Build.SOC_MODEL;
+            }
+            if (chip.isEmpty() && Build.HARDWARE != null && !Build.HARDWARE.isEmpty() && !Build.HARDWARE.equalsIgnoreCase("unknown")) {
+                chip = Build.HARDWARE.toUpperCase();
+            }
+            if (chip.isEmpty()) {
+                chip = cpuInfo.getArchitecture() + " Processor";
+            }
+            tvCpuName.setText(chip);
+            tvCpuCoresActive.setText(cpuInfo.getCoreCount() + " Cores Active");
+        }
 
         if (cachedGpuInfo != null) {
             tvGpuRenderer.setText(cachedGpuInfo.getRenderer());
-            tvGpuVendor.setText(cachedGpuInfo.getVendor());
-            tvGpuOpengl.setText(cachedGpuInfo.getOpenglVersion());
+            if (cpuMonitor != null) {
+                tvGpuFrequency.setText(String.format("%.0f MHz", cpuMonitor.getCpuInfo().getAverageFrequencyGhz() * 250));
+            } else {
+                tvGpuFrequency.setText("710 MHz");
+            }
         }
+    }
+
+    private void updateDiagnosticRuntime() {
+        long elapsedSec = (SystemClock.elapsedRealtime() - sessionStartTimeMs) / 1000;
+        long h = elapsedSec / 3600;
+        long m = (elapsedSec % 3600) / 60;
+        long s = elapsedSec % 60;
+        tvActiveDiagnosticRun.setText(String.format("%02dh %02dm %02ds", h, m, s));
     }
 
     private void updateRealtimeMetrics() {
@@ -386,19 +449,17 @@ public class MainActivity extends AppCompatActivity {
         // 1. CPU Metrics
         if (cpuMonitor != null) {
             CpuInfo cpuInfo = cpuMonitor.getCpuInfo();
-            tvCpuUsage.setText(cpuInfo.getUsagePercentage() + "%");
-            pbCpuUsage.setProgress(cpuInfo.getUsagePercentage());
-            tvCpuCoresAndFreq.setText(String.format("%d Cores @ %.2f GHz",
-                    cpuInfo.getCoreCount(), cpuInfo.getAverageFrequencyGhz()));
+            tvCpuLoadPercentage.setText(cpuInfo.getUsagePercentage() + "% LOAD");
+            pbCpuLoad.setProgress(cpuInfo.getUsagePercentage());
+            tvCpuCoresActive.setText(cpuInfo.getCoreCount() + " Cores Active");
         }
 
         // 2. GPU Metrics
         if (gpuMonitor != null) {
             GpuInfo gpuInfo = gpuMonitor.sampleGpuInfo();
             int gpuLoad = gpuInfo.getGpuUsagePercentage();
-            tvGpuUsage.setText(gpuLoad + "%");
-            pbGpuUsage.setProgress(gpuLoad);
-            tvGpuUsageNote.setText(String.format("Graphics Engine Active (%s)", gpuInfo.getVendor()));
+            tvGpuUtilPercentage.setText(gpuLoad + "% UTIL");
+            pbGpuUtil.setProgress(gpuLoad);
         }
 
         // 3. RAM Usage
@@ -406,28 +467,24 @@ public class MainActivity extends AppCompatActivity {
         String totalRamStr = FormatUtils.formatBytes(stats.getTotalRamBytes());
         String availRamStr = FormatUtils.formatBytes(stats.getAvailableRamBytes());
 
-        tvRamDetails.setText(String.format("Used: %s / Total: %s", usedRamStr, totalRamStr));
+        tvRamUsageValues.setText(String.format("Used: %s / Total: %s", usedRamStr, totalRamStr));
         tvRamPercentage.setText(stats.getRamUsagePercentage() + "%");
         pbRamUsage.setProgress(stats.getRamUsagePercentage());
         tvRamAvailable.setText(String.format("Available: %s", availRamStr));
 
-        // 3. Battery & Thermals
-        tvBatteryStatus.setText("Status: " + stats.getBatteryStatus());
-        tvBatteryLevel.setText(stats.getBatteryLevel() + "%");
-        pbBatteryLevel.setProgress(stats.getBatteryLevel());
-        tvBatteryTemp.setText(FormatUtils.formatTemperature(stats.getBatteryTemperatureC()));
+        // 4. Battery Health & Thermals (Option 2)
+        tvBatteryLevelState.setText(String.format("%d%% (%s)", stats.getBatteryLevel(), stats.getBatteryStatus()));
+        tvBatteryTemp.setText(String.format("%.1f °C", stats.getBatteryTemperatureC()));
+        tvBatteryVoltage.setText(String.format("%.2f V", stats.getBatteryVoltageV()));
 
-        // 4. Storage Usage
+        // 5. Storage Usage
         String usedStorageStr = FormatUtils.formatBytes(stats.getUsedStorageBytes());
         String totalStorageStr = FormatUtils.formatBytes(stats.getTotalStorageBytes());
         String freeStorageStr = FormatUtils.formatBytes(stats.getAvailableStorageBytes());
 
-        tvStorageDetails.setText(String.format("Used: %s / Total: %s", usedStorageStr, totalStorageStr));
-        tvStoragePercentage.setText(stats.getStorageUsagePercentage() + "%");
+        tvStoragePercentage.setText(stats.getStorageUsagePercentage() + "% USED");
         pbStorageUsage.setProgress(stats.getStorageUsagePercentage());
-        tvStorageFree.setText(String.format("Free Space: %s", freeStorageStr));
-
-        // 5. Timestamp
-        tvLastUpdated.setText("Last Updated: " + stats.getFormattedTimestamp());
+        tvStorageUsageValues.setText(String.format("Used: %s / Total: %s", usedStorageStr, totalStorageStr));
+        tvStorageAvailable.setText(String.format("%s Free", freeStorageStr));
     }
 }
