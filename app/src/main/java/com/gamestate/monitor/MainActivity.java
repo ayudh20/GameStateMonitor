@@ -3,6 +3,8 @@ package com.gamestate.monitor;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -16,9 +18,6 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.Display;
-import android.view.View;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -43,7 +42,8 @@ import com.google.android.material.button.MaterialButton;
 /**
  * MainActivity
  * ------------
- * Controller for GameState Monitor, bound 1:1 to the Figma UI specification.
+ * Controller for GameState Monitor, bound 1:1 to the Figma UI specification with
+ * the restored Floating Gaming HUD card in Cyan.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -86,13 +86,10 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvStorageUsageValues;
     private TextView tvStorageAvailable;
 
-    // Diagnostic HUD Overlays
-    private LinearLayout btnToggleOverlayFps;
-    private ImageView ivOverlayFpsIcon;
-    private TextView tvOverlayFpsText;
-    private LinearLayout btnToggleOverlayTemp;
-    private ImageView ivOverlayTempIcon;
-    private TextView tvOverlayTempText;
+    // Card 7: Floating Gaming Overlay Controls
+    private TextView tvOverlayBadgeStatus;
+    private MaterialButton btnToggleOverlay;
+    private MaterialButton btnCopyAdbCommand;
 
     // Action Controls
     private MaterialButton btnRefresh;
@@ -169,11 +166,15 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Statistics Updated", Toast.LENGTH_SHORT).show();
         });
 
-        // 5. Set click listeners for Floating Overlay Chips
-        btnToggleOverlayFps.setOnClickListener(v -> handleOverlayToggle());
-        btnToggleOverlayTemp.setOnClickListener(v -> {
-            handleOverlayToggle();
-            Toast.makeText(MainActivity.this, "Thermal HUD Linked with Overlay", Toast.LENGTH_SHORT).show();
+        // 5. Set click listener for Floating Overlay Toggle & ADB Command
+        btnToggleOverlay.setOnClickListener(v -> handleOverlayToggle());
+        btnCopyAdbCommand.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("ADB Command", "adb shell pm grant " + getPackageName() + " android.permission.DUMP");
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(MainActivity.this, "ADB command copied to clipboard!", Toast.LENGTH_SHORT).show();
+            }
         });
 
         // 6. Request notification permission on Android 13+
@@ -295,31 +296,29 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Updates the overlay chip buttons depending on whether the HUD is active.
+     * Updates the button label and status badge depending on whether the overlay is running.
      */
     private void updateOverlayButtonState() {
         boolean running = isOverlayRunning();
         OverlayService.isRunning = running;
         if (running) {
-            btnToggleOverlayFps.setBackgroundResource(R.drawable.bg_chip_figma_active);
-            ivOverlayFpsIcon.setImageResource(R.drawable.ic_check_small);
-            ivOverlayFpsIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
-            tvOverlayFpsText.setTextColor(ContextCompat.getColor(this, R.color.white));
-
-            btnToggleOverlayTemp.setBackgroundResource(R.drawable.bg_chip_figma_active);
-            ivOverlayTempIcon.setImageResource(R.drawable.ic_check_small);
-            ivOverlayTempIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
-            tvOverlayTempText.setTextColor(ContextCompat.getColor(this, R.color.white));
+            btnToggleOverlay.setText("Stop Gaming Overlay");
+            btnToggleOverlay.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.status_high_load)
+            ));
+            btnToggleOverlay.setTextColor(ContextCompat.getColor(this, R.color.white));
+            btnToggleOverlay.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white)));
+            tvOverlayBadgeStatus.setText("ACTIVE (FLOATING)");
+            tvOverlayBadgeStatus.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
         } else {
-            btnToggleOverlayFps.setBackgroundResource(R.drawable.bg_chip_figma_inactive);
-            ivOverlayFpsIcon.setImageResource(R.drawable.ic_minus_small);
-            ivOverlayFpsIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_text_muted)));
-            tvOverlayFpsText.setTextColor(ContextCompat.getColor(this, R.color.figma_text_muted));
-
-            btnToggleOverlayTemp.setBackgroundResource(R.drawable.bg_chip_figma_inactive);
-            ivOverlayTempIcon.setImageResource(R.drawable.ic_minus_small);
-            ivOverlayTempIcon.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_text_muted)));
-            tvOverlayTempText.setTextColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+            btnToggleOverlay.setText("Launch Gaming Overlay");
+            btnToggleOverlay.setBackgroundTintList(ColorStateList.valueOf(
+                    ContextCompat.getColor(this, R.color.figma_cyan)
+            ));
+            btnToggleOverlay.setTextColor(ContextCompat.getColor(this, R.color.black));
+            btnToggleOverlay.setIconTint(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.black)));
+            tvOverlayBadgeStatus.setText("INACTIVE");
+            tvOverlayBadgeStatus.setTextColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         }
     }
 
@@ -372,13 +371,10 @@ public class MainActivity extends AppCompatActivity {
         tvStorageUsageValues = findViewById(R.id.tvStorageUsageValues);
         tvStorageAvailable = findViewById(R.id.tvStorageAvailable);
 
-        // Diagnostic HUD Overlays
-        btnToggleOverlayFps = findViewById(R.id.btnToggleOverlayFps);
-        ivOverlayFpsIcon = findViewById(R.id.ivOverlayFpsIcon);
-        tvOverlayFpsText = findViewById(R.id.tvOverlayFpsText);
-        btnToggleOverlayTemp = findViewById(R.id.btnToggleOverlayTemp);
-        ivOverlayTempIcon = findViewById(R.id.ivOverlayTempIcon);
-        tvOverlayTempText = findViewById(R.id.tvOverlayTempText);
+        // Card 7: Floating Gaming Overlay
+        tvOverlayBadgeStatus = findViewById(R.id.tvOverlayBadgeStatus);
+        btnToggleOverlay = findViewById(R.id.btnToggleOverlay);
+        btnCopyAdbCommand = findViewById(R.id.btnCopyAdbCommand);
 
         // Action Controls
         btnRefresh = findViewById(R.id.btnRefresh);

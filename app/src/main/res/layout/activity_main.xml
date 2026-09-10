@@ -740,89 +740,124 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- DIAGNOSTIC HUD OVERLAYS SECTION                               -->
+        <!-- CARD 7: FLOATING GAMING OVERLAY HUD (Image 2 style, in Cyan)   -->
         <!-- ============================================================ -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:layout_marginBottom="10dp"
-            android:letterSpacing="0.08"
-            android:text="DIAGNOSTIC HUD OVERLAYS"
-            android:textColor="@color/figma_text_muted"
-            android:textSize="11sp"
-            android:textStyle="bold" />
-
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="@color/figma_card_bg"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/figma_cyan"
+            app:strokeWidth="1.5dp">
 
-            <!-- FPS Overlay Toggle Chip -->
             <LinearLayout
-                android:id="@+id/btnToggleOverlayFps"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chip_figma_active"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp">
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
 
-                <ImageView
-                    android:id="@+id/ivOverlayFpsIcon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_check_small"
-                    app:tint="@color/figma_cyan" />
+                <!-- Header Row: Display Icon + Title + Status Badge -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Gaming Overlay"
+                        android:src="@drawable/ic_display"
+                        app:tint="@color/figma_cyan" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:layout_weight="1"
+                        android:text="Floating Gaming HUD"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvOverlayBadgeStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_status_badge"
+                        android:text="INACTIVE"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="10sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
-                    android:id="@+id/tvOverlayFpsText"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="FPS Overlay"
-                    android:textColor="@color/white"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Temp Overlay Toggle Chip -->
-            <LinearLayout
-                android:id="@+id/btnToggleOverlayTemp"
-                android:layout_width="0dp"
-                android:layout_height="44dp"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_chip_figma_inactive"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center"
-                android:orientation="horizontal"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp">
-
-                <ImageView
-                    android:id="@+id/ivOverlayTempIcon"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_minus_small"
-                    app:tint="@color/figma_text_muted" />
-
-                <TextView
-                    android:id="@+id/tvOverlayTempText"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="Temp Overlay"
+                    android:layout_marginTop="8dp"
+                    android:text="Display real-time CPU % and GPU info alongside RAM and Thermals as a draggable HUD floating over any game."
                     android:textColor="@color/figma_text_muted"
-                    android:textSize="13sp" />
+                    android:textSize="12sp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnToggleOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Launch Gaming Overlay"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/figma_cyan"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_display"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/black" />
+
+                <!-- In-Game Hook Mode & ADB Unlock -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:background="@drawable/bg_inner_container"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        android:id="@+id/tvDumpStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="In-Game Hook: Active Display Pacing"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvDumpHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="Run one-time ADB command to unlock deep SurfaceFlinger game engine hooking."
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="10sp" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyAdbCommand"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:layout_marginTop="6dp"
+                        android:padding="0dp"
+                        android:text="Copy ADB Unlock Command"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="11sp"
+                        app:strokeColor="@color/figma_cyan" />
+                </LinearLayout>
+
             </LinearLayout>
-        </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
         <!-- ACTION BUTTON: REFRESH STATISTICS                             -->
@@ -841,6 +876,17 @@
             app:icon="@drawable/ic_refresh"
             app:iconGravity="textStart"
             app:iconTint="@color/black" />
+
+        <TextView
+            android:id="@+id/tvAutoRefreshNotice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp"
+            android:text="Auto-refreshes every 2 seconds"
+            android:textColor="@color/figma_text_muted"
+            android:textSize="11sp" />
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

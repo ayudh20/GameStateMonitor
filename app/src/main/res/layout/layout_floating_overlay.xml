@@ -82,7 +82,7 @@
             android:id="@+id/tvOverlayRam"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/accent_purple"
+            android:textColor="@color/accent_cyan"
             android:textSize="12sp"
             android:textStyle="bold"
             tools:text="RAM 62%" />
