@@ -620,13 +620,15 @@ public class MainActivity extends AppCompatActivity {
             gameState = gameDetector.detectForegroundGame();
         }
 
-        FpsMonitorState monitorState = GameStateService.getCurrentMonitorState();
+        FpsMonitorState monitorState;
         if (gameState != null && gameState.hasGame()) {
             if (fpsBackendManager.isSupportedBackendAvailable()) {
                 monitorState = FpsMonitorState.FPS_MONITORING_ACTIVE;
             } else {
                 monitorState = FpsMonitorState.WAITING_FOR_BACKEND;
             }
+        } else {
+            monitorState = FpsMonitorState.NO_GAME_DETECTED;
         }
 
         FpsMetrics metrics = GameStateService.getCurrentMetrics();
