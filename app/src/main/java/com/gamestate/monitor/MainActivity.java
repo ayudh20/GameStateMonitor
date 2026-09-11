@@ -33,6 +33,8 @@ import com.gamestate.monitor.model.DeviceInfo;
 import com.gamestate.monitor.model.GpuInfo;
 import com.gamestate.monitor.model.PerformanceStats;
 import com.gamestate.monitor.service.OverlayService;
+import com.gamestate.monitor.ui.CardHeaderView;
+import com.gamestate.monitor.ui.KeyValueRowView;
 import com.gamestate.monitor.util.CpuMonitor;
 import com.gamestate.monitor.util.DeviceStatsManager;
 import com.gamestate.monitor.util.FormatUtils;
@@ -54,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
     // Card 1: Device Info
     private TextView tvDeviceModel;
     private TextView tvDeviceAndroidVersion;
+    private TextView tvDeviceKernelVersion;
     private TextView tvActiveDiagnosticRun;
 
     // Card 2: CPU Processor
@@ -78,6 +81,8 @@ public class MainActivity extends AppCompatActivity {
     // Card 5: Battery Health & Thermals
     private TextView tvBatteryLevelState;
     private TextView tvBatteryTemp;
+    private TextView tvCpuTemp;
+    private TextView tvThermalStatus;
     private TextView tvBatteryVoltage;
 
     // Card 6: Internal Storage
@@ -337,22 +342,31 @@ public class MainActivity extends AppCompatActivity {
 
     private void bindViews() {
         // Card 1: Device Info
-        tvDeviceModel = findViewById(R.id.tvDeviceModel);
-        tvDeviceAndroidVersion = findViewById(R.id.tvDeviceAndroidVersion);
-        tvActiveDiagnosticRun = findViewById(R.id.tvActiveDiagnosticRun);
+        KeyValueRowView rowDeviceModel = findViewById(R.id.rowDeviceModel);
+        KeyValueRowView rowDeviceAndroidVersion = findViewById(R.id.rowDeviceAndroidVersion);
+        KeyValueRowView rowDeviceKernelVersion = findViewById(R.id.rowDeviceKernelVersion);
+        KeyValueRowView rowActiveDiagnosticRun = findViewById(R.id.rowActiveDiagnosticRun);
+
+        tvDeviceModel = rowDeviceModel.getValueTextView();
+        tvDeviceAndroidVersion = rowDeviceAndroidVersion.getValueTextView();
+        tvDeviceKernelVersion = rowDeviceKernelVersion.getValueTextView();
+        tvActiveDiagnosticRun = rowActiveDiagnosticRun.getValueTextView();
 
         // Card 2: CPU Processor
-        tvCpuLoadPercentage = findViewById(R.id.tvCpuLoadPercentage);
+        CardHeaderView headerCpu = findViewById(R.id.headerCpu);
+        tvCpuLoadPercentage = headerCpu.getEndTextView();
         pbCpuLoad = findViewById(R.id.pbCpuLoad);
         tvCpuName = findViewById(R.id.tvCpuName);
         tvCpuCoresActive = findViewById(R.id.tvCpuCoresActive);
 
         // Card 3: GPU Graphics
-        tvGpuUtilPercentage = findViewById(R.id.tvGpuUtilPercentage);
+        CardHeaderView headerGpu = findViewById(R.id.headerGpu);
+        tvGpuUtilPercentage = headerGpu.getEndTextView();
         pbGpuUtil = findViewById(R.id.pbGpuUtil);
         tvGpuRenderer = findViewById(R.id.tvGpuRenderer);
         tvGpuFrequency = findViewById(R.id.tvGpuFrequency);
-        tvDisplayRefreshRate = findViewById(R.id.tvDisplayRefreshRate);
+        KeyValueRowView rowDisplayRefreshRate = findViewById(R.id.rowDisplayRefreshRate);
+        tvDisplayRefreshRate = rowDisplayRefreshRate.getValueTextView();
 
         // Card 4: RAM Memory
         tvRamUsageValues = findViewById(R.id.tvRamUsageValues);
@@ -361,18 +375,28 @@ public class MainActivity extends AppCompatActivity {
         tvRamAvailable = findViewById(R.id.tvRamAvailable);
 
         // Card 5: Battery Health & Thermals
-        tvBatteryLevelState = findViewById(R.id.tvBatteryLevelState);
-        tvBatteryTemp = findViewById(R.id.tvBatteryTemp);
-        tvBatteryVoltage = findViewById(R.id.tvBatteryVoltage);
+        KeyValueRowView rowBatteryLevel = findViewById(R.id.rowBatteryLevel);
+        KeyValueRowView rowBatteryTemp = findViewById(R.id.rowBatteryTemp);
+        KeyValueRowView rowCpuTemp = findViewById(R.id.rowCpuTemp);
+        KeyValueRowView rowThermalStatus = findViewById(R.id.rowThermalStatus);
+        KeyValueRowView rowBatteryVoltage = findViewById(R.id.rowBatteryVoltage);
+
+        tvBatteryLevelState = rowBatteryLevel.getValueTextView();
+        tvBatteryTemp = rowBatteryTemp.getValueTextView();
+        tvCpuTemp = rowCpuTemp.getValueTextView();
+        tvThermalStatus = rowThermalStatus.getValueTextView();
+        tvBatteryVoltage = rowBatteryVoltage.getValueTextView();
 
         // Card 6: Internal Storage
-        tvStoragePercentage = findViewById(R.id.tvStoragePercentage);
+        CardHeaderView headerStorage = findViewById(R.id.headerStorage);
+        tvStoragePercentage = headerStorage.getEndTextView();
         pbStorageUsage = findViewById(R.id.pbStorageUsage);
         tvStorageUsageValues = findViewById(R.id.tvStorageUsageValues);
         tvStorageAvailable = findViewById(R.id.tvStorageAvailable);
 
         // Card 7: Floating Gaming Overlay
-        tvOverlayBadgeStatus = findViewById(R.id.tvOverlayBadgeStatus);
+        CardHeaderView headerOverlay = findViewById(R.id.headerOverlay);
+        tvOverlayBadgeStatus = headerOverlay.getEndTextView();
         btnToggleOverlay = findViewById(R.id.btnToggleOverlay);
         btnCopyAdbCommand = findViewById(R.id.btnCopyAdbCommand);
 
@@ -384,11 +408,13 @@ public class MainActivity extends AppCompatActivity {
         DeviceInfo deviceInfo = statsManager.getDeviceInfo();
 
         tvDeviceModel.setText(deviceInfo.getFullDeviceName());
+        tvDeviceAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion());
+
         String kernel = System.getProperty("os.version");
         if (kernel != null && !kernel.isEmpty()) {
-            tvDeviceAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion() + " (Kernel " + kernel + ")");
+            tvDeviceKernelVersion.setText(kernel);
         } else {
-            tvDeviceAndroidVersion.setText("Android " + deviceInfo.getAndroidVersion());
+            tvDeviceKernelVersion.setText("Linux (Unknown)");
         }
 
         float refreshRate = statsManager.getScreenRefreshRate();
@@ -468,9 +494,38 @@ public class MainActivity extends AppCompatActivity {
         pbRamUsage.setProgress(stats.getRamUsagePercentage());
         tvRamAvailable.setText(String.format("Available: %s", availRamStr));
 
-        // 4. Battery Health & Thermals (Option 2)
+        // 4. Battery Health & Thermals
         tvBatteryLevelState.setText(String.format("%d%% (%s)", stats.getBatteryLevel(), stats.getBatteryStatus()));
         tvBatteryTemp.setText(String.format("%.1f °C", stats.getBatteryTemperatureC()));
+
+        // CPU Temperature (if available)
+        if (stats.hasCpuTemperature()) {
+            tvCpuTemp.setText(String.format("%.1f °C", stats.getCpuTemperatureC()));
+        } else {
+            tvCpuTemp.setText("N/A");
+        }
+
+        // Thermal Status (Normal, Warm, Hot, Critical) with color coding
+        PerformanceStats.ThermalStatus thermalStatus = stats.getThermalStatus();
+        tvThermalStatus.setText(stats.getThermalStatusText());
+        int thermalColor;
+        switch (thermalStatus) {
+            case WARM:
+                thermalColor = ContextCompat.getColor(this, R.color.thermal_warm);
+                break;
+            case HOT:
+                thermalColor = ContextCompat.getColor(this, R.color.thermal_hot);
+                break;
+            case CRITICAL:
+                thermalColor = ContextCompat.getColor(this, R.color.thermal_critical);
+                break;
+            case NORMAL:
+            default:
+                thermalColor = ContextCompat.getColor(this, R.color.thermal_normal);
+                break;
+        }
+        tvThermalStatus.setTextColor(thermalColor);
+
         tvBatteryVoltage.setText(String.format("%.2f V", stats.getBatteryVoltageV()));
 
         // 5. Storage Usage

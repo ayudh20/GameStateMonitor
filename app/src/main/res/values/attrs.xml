@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- CardHeaderView attributes -->
+    <declare-styleable name="CardHeaderView">
+        <attr name="headerTitle" format="string" />
+        <attr name="headerIcon" format="reference" />
+        <attr name="headerEndText" format="string" />
+        <attr name="headerEndTextColor" format="color" />
+        <attr name="headerEndBadgeBackground" format="reference" />
+    </declare-styleable>
+
+    <!-- KeyValueRowView attributes -->
+    <declare-styleable name="KeyValueRowView">
+        <attr name="rowLabel" format="string" />
+        <attr name="rowValue" format="string" />
+        <attr name="rowValueColor" format="color" />
+    </declare-styleable>
+</resources>

@@ -29,6 +29,12 @@
     <color name="status_moderate">#FF9100</color>
     <color name="status_high_load">#FF5252</color>
 
+    <!-- Thermal Status Colors (Normal, Warm, Hot, Critical) -->
+    <color name="thermal_normal">#00E676</color>
+    <color name="thermal_warm">#FFD600</color>
+    <color name="thermal_hot">#FF9100</color>
+    <color name="thermal_critical">#FF5252</color>
+
     <!-- Backgrounds and Surfaces -->
     <color name="bg_dark">#000000</color>
     <color name="bg_card">#0D0D11</color>

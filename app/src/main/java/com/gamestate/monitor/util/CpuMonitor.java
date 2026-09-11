@@ -184,4 +184,97 @@ public class CpuMonitor {
         }
         return "ARM64";
     }
+
+    /**
+     * Attempts to query the CPU temperature in Celsius.
+     * Searches common sysfs thermal zones and hwmon paths.
+     * Returns Float.NaN if unavailable or restricted by SELinux.
+     */
+    public float getCpuTemperatureC() {
+        // 1. Scan /sys/class/thermal/thermal_zone*
+        File thermalDir = new File("/sys/class/thermal");
+        if (thermalDir.exists() && thermalDir.isDirectory()) {
+            File[] zones = thermalDir.listFiles((dir, name) -> name.startsWith("thermal_zone"));
+            if (zones != null) {
+                // Priority scan: look for zone whose type matches cpu/soc/tsens
+                for (File zone : zones) {
+                    String type = readSysfsString(new File(zone, "type").getAbsolutePath());
+                    if (type != null) {
+                        String lower = type.toLowerCase();
+                        if (lower.contains("cpu") || lower.contains("soc") || lower.contains("tsens")
+                                || lower.contains("ap") || lower.contains("core") || lower.contains("mtkts")) {
+                            float temp = readThermalZoneTemp(new File(zone, "temp"));
+                            if (temp > 0 && temp < 120) {
+                                return temp;
+                            }
+                        }
+                    }
+                }
+                // Fallback scan: first zone with plausible temperature (e.g. 20 - 110 °C)
+                for (File zone : zones) {
+                    float temp = readThermalZoneTemp(new File(zone, "temp"));
+                    if (temp >= 20.0f && temp <= 110.0f) {
+                        return temp;
+                    }
+                }
+            }
+        }
+
+        // 2. Scan fallback known paths
+        String[] fallbackPaths = new String[]{
+                "/sys/devices/system/cpu/cpu0/cpufreq/cpu_temp",
+                "/sys/devices/system/cpu/cpu/cpufreq/cpu_temp",
+                "/sys/class/hwmon/hwmon0/temp1_input",
+                "/sys/class/hwmon/hwmon1/temp1_input",
+                "/sys/devices/platform/soc_thermal/temp",
+                "/sys/devices/virtual/thermal/thermal_zone0/temp"
+        };
+        for (String path : fallbackPaths) {
+            float temp = readThermalZoneTemp(new File(path));
+            if (temp > 0 && temp < 120) {
+                return temp;
+            }
+        }
+
+        return Float.NaN;
+    }
+
+    private float readThermalZoneTemp(File file) {
+        if (!file.exists()) return Float.NaN;
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            String line = reader.readLine();
+            if (line != null) {
+                float raw = Float.parseFloat(line.trim());
+                if (raw > 1000.0f) {
+                    return raw / 1000.0f;
+                } else if (raw > 0) {
+                    return raw;
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (Exception ignored) {}
+            }
+        }
+        return Float.NaN;
+    }
+
+    private String readSysfsString(String path) {
+        File file = new File(path);
+        if (!file.exists()) return null;
+        BufferedReader reader = null;
+        try {
+            reader = new BufferedReader(new FileReader(file));
+            return reader.readLine();
+        } catch (Exception ignored) {
+        } finally {
+            if (reader != null) {
+                try { reader.close(); } catch (Exception ignored) {}
+            }
+        }
+        return null;
+    }
 }

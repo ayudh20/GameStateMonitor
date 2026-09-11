@@ -18,6 +18,17 @@ public class PerformanceStats {
         HIGH_LOAD    // RAM usage > 85% or Battery Temp > 42°C (risk of thermal throttling)
     }
 
+    /**
+     * Enum representing fine-grained thermal severity state:
+     * Normal (Green), Warm (Yellow), Hot (Orange), Critical (Red)
+     */
+    public enum ThermalStatus {
+        NORMAL,
+        WARM,
+        HOT,
+        CRITICAL
+    }
+
     // RAM Metrics (in bytes and calculated percentage)
     private final long totalRamBytes;
     private final long availableRamBytes;
@@ -27,6 +38,8 @@ public class PerformanceStats {
     // Battery & Thermal Metrics
     private final int batteryLevel;             // Percentage: 0 to 100
     private final float batteryTemperatureC;    // Celsius
+    private final float cpuTemperatureC;        // Celsius (Float.NaN if unavailable)
+    private final ThermalStatus thermalStatus;  // Normal, Warm, Hot, Critical
     private final boolean isCharging;
     private final String batteryStatus;         // E.g., "Charging (AC)", "Discharging"
     private final float batteryVoltageV;        // Volts, e.g., 4.12V
@@ -53,17 +66,36 @@ public class PerformanceStats {
                             long totalStorageBytes,
                             long availableStorageBytes,
                             String formattedTimestamp) {
-        this(totalRamBytes, availableRamBytes, batteryLevel, batteryTemperatureC,
+        this(totalRamBytes, availableRamBytes, batteryLevel, batteryTemperatureC, Float.NaN, null,
                 isCharging, batteryStatus, 4.0f, totalStorageBytes, availableStorageBytes, formattedTimestamp);
     }
 
     /**
-     * Full constructor for PerformanceStats snapshot including battery voltage.
+     * Backward-compatible constructor including battery voltage.
      */
     public PerformanceStats(long totalRamBytes,
                             long availableRamBytes,
                             int batteryLevel,
                             float batteryTemperatureC,
+                            boolean isCharging,
+                            String batteryStatus,
+                            float batteryVoltageV,
+                            long totalStorageBytes,
+                            long availableStorageBytes,
+                            String formattedTimestamp) {
+        this(totalRamBytes, availableRamBytes, batteryLevel, batteryTemperatureC, Float.NaN, null,
+                isCharging, batteryStatus, batteryVoltageV, totalStorageBytes, availableStorageBytes, formattedTimestamp);
+    }
+
+    /**
+     * Comprehensive constructor for PerformanceStats snapshot including CPU thermals and ThermalStatus.
+     */
+    public PerformanceStats(long totalRamBytes,
+                            long availableRamBytes,
+                            int batteryLevel,
+                            float batteryTemperatureC,
+                            float cpuTemperatureC,
+                            ThermalStatus thermalStatus,
                             boolean isCharging,
                             String batteryStatus,
                             float batteryVoltageV,
@@ -80,6 +112,7 @@ public class PerformanceStats {
 
         this.batteryLevel = batteryLevel;
         this.batteryTemperatureC = batteryTemperatureC;
+        this.cpuTemperatureC = cpuTemperatureC;
         this.isCharging = isCharging;
         this.batteryStatus = batteryStatus != null ? batteryStatus : "Unknown";
         this.batteryVoltageV = batteryVoltageV > 0 ? batteryVoltageV : 4.0f;
@@ -93,6 +126,26 @@ public class PerformanceStats {
 
         this.formattedTimestamp = formattedTimestamp;
         this.systemStatus = evaluateSystemStatus(this.ramUsagePercentage, this.batteryTemperatureC);
+        this.thermalStatus = thermalStatus != null ? thermalStatus : evaluateThermalStatus(this.batteryTemperatureC, this.cpuTemperatureC);
+    }
+
+    /**
+     * Evaluates thermal severity state (Normal, Warm, Hot, Critical) based on sensor readings.
+     */
+    public static ThermalStatus evaluateThermalStatus(float batteryTempC, float cpuTempC) {
+        float maxTemp = batteryTempC;
+        if (!Float.isNaN(cpuTempC) && cpuTempC > 0) {
+            maxTemp = Math.max(maxTemp, cpuTempC);
+        }
+        if (maxTemp >= 55.0f) {
+            return ThermalStatus.CRITICAL;
+        } else if (maxTemp >= 45.0f) {
+            return ThermalStatus.HOT;
+        } else if (maxTemp >= 38.0f) {
+            return ThermalStatus.WARM;
+        } else {
+            return ThermalStatus.NORMAL;
+        }
     }
 
     /**
@@ -170,6 +223,33 @@ public class PerformanceStats {
 
     public SystemStatus getSystemStatus() {
         return systemStatus;
+    }
+
+    public float getCpuTemperatureC() {
+        return cpuTemperatureC;
+    }
+
+    public boolean hasCpuTemperature() {
+        return !Float.isNaN(cpuTemperatureC) && cpuTemperatureC > 0;
+    }
+
+    public ThermalStatus getThermalStatus() {
+        return thermalStatus != null ? thermalStatus : ThermalStatus.NORMAL;
+    }
+
+    public String getThermalStatusText() {
+        ThermalStatus status = getThermalStatus();
+        switch (status) {
+            case WARM:
+                return "Warm";
+            case HOT:
+                return "Hot";
+            case CRITICAL:
+                return "Critical";
+            case NORMAL:
+            default:
+                return "Normal";
+        }
     }
 
     public String getFormattedTimestamp() {

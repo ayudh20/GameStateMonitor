@@ -8,6 +8,7 @@ import android.hardware.display.DisplayManager;
 import android.os.BatteryManager;
 import android.os.Build;
 import android.os.Environment;
+import android.os.PowerManager;
 import android.os.StatFs;
 import android.util.Log;
 import android.view.Display;
@@ -34,6 +35,7 @@ public class DeviceStatsManager {
 
     // Application context to prevent Activity memory leaks
     private final Context appContext;
+    private final CpuMonitor cpuMonitor;
 
     /**
      * Constructor accepts an Android Context.
@@ -41,6 +43,7 @@ public class DeviceStatsManager {
      */
     public DeviceStatsManager(Context context) {
         this.appContext = context.getApplicationContext();
+        this.cpuMonitor = new CpuMonitor();
     }
 
     /**
@@ -153,7 +156,53 @@ public class DeviceStatsManager {
             Log.e(TAG, "Error fetching Storage stats: " + e.getMessage());
         }
 
-        // 4. Current Formatted Timestamp
+        // 4. Fetch CPU Temperature (if available)
+        float cpuTempC = Float.NaN;
+        try {
+            if (cpuMonitor != null) {
+                cpuTempC = cpuMonitor.getCpuTemperatureC();
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error fetching CPU temperature: " + e.getMessage());
+        }
+
+        // 5. Evaluate Thermal Status
+        PerformanceStats.ThermalStatus thermalStatus = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            try {
+                PowerManager pm = (PowerManager) appContext.getSystemService(Context.POWER_SERVICE);
+                if (pm != null) {
+                    int status = pm.getCurrentThermalStatus();
+                    switch (status) {
+                        case PowerManager.THERMAL_STATUS_NONE:
+                        case PowerManager.THERMAL_STATUS_LIGHT:
+                            thermalStatus = PerformanceStats.ThermalStatus.NORMAL;
+                            break;
+                        case PowerManager.THERMAL_STATUS_MODERATE:
+                            thermalStatus = PerformanceStats.ThermalStatus.WARM;
+                            break;
+                        case PowerManager.THERMAL_STATUS_SEVERE:
+                            thermalStatus = PerformanceStats.ThermalStatus.HOT;
+                            break;
+                        case PowerManager.THERMAL_STATUS_CRITICAL:
+                        case PowerManager.THERMAL_STATUS_EMERGENCY:
+                        case PowerManager.THERMAL_STATUS_SHUTDOWN:
+                            thermalStatus = PerformanceStats.ThermalStatus.CRITICAL;
+                            break;
+                    }
+                }
+            } catch (Exception e) {
+                Log.w(TAG, "Error querying PowerManager thermal status: " + e.getMessage());
+            }
+        }
+
+        // Combine system thermal status with sensor-based threshold evaluation
+        PerformanceStats.ThermalStatus sensorStatus = PerformanceStats.evaluateThermalStatus(batteryTempC, cpuTempC);
+        if (thermalStatus == null || sensorStatus.ordinal() > thermalStatus.ordinal()) {
+            thermalStatus = sensorStatus;
+        }
+
+        // 6. Current Formatted Timestamp
         String formattedTimestamp = FormatUtils.getCurrentDateTimeFormatted();
 
         return new PerformanceStats(
@@ -161,6 +210,8 @@ public class DeviceStatsManager {
                 availableRam,
                 batteryLevel,
                 batteryTempC,
+                cpuTempC,
+                thermalStatus,
                 isCharging,
                 batteryStatusText,
                 batteryVoltageV,

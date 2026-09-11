@@ -57,14 +57,14 @@
         <!-- CARD 1: DEVICE INFORMATION                                   -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -72,36 +72,13 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Squircle Badge + Title -->
-                <LinearLayout
+                <!-- Header -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerDeviceInfo"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Device Info"
-                            android:src="@drawable/ic_device"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="Device Information"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:headerIcon="@drawable/ic_device"
+                    app:headerTitle="Device Information" />
 
                 <!-- Key-Value Rows -->
                 <LinearLayout
@@ -111,78 +88,40 @@
                     android:orientation="vertical">
 
                     <!-- Model Name -->
-                    <LinearLayout
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceModel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        app:rowLabel="Model Name"
+                        app:rowValue="ROG Phone 8 Pro" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Model Name"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvDeviceModel"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="ROG Phone 8 Pro" />
-                    </LinearLayout>
-
-                    <!-- OS Engine -->
-                    <LinearLayout
+                    <!-- Android Version -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceAndroidVersion"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        app:rowLabel="Android Version"
+                        app:rowValue="Android 14" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="OS Engine"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvDeviceAndroidVersion"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="Android 14 (Kernel 6.1)" />
-                    </LinearLayout>
+                    <!-- Kernel Version -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceKernelVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Kernel Version"
+                        app:rowValue="Linux 6.1" />
 
                     <!-- Active Diagnostic Run -->
-                    <LinearLayout
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowActiveDiagnosticRun"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Active Diagnostic Run"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvActiveDiagnosticRun"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/figma_cyan"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="04h 12m 19s" />
-                    </LinearLayout>
+                        app:rowLabel="Active Diagnostic Run"
+                        app:rowValue="00h 00m 00s"
+                        app:rowValueColor="@color/figma_cyan" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -191,14 +130,14 @@
         <!-- CARD 2: CPU PROCESSOR                                         -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -206,46 +145,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Badge + Title + Load % -->
-                <LinearLayout
+                <!-- Header with Prominent Metric -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerCpu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="CPU"
-                            android:src="@drawable/ic_pulse"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:text="CPU Processor"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvCpuLoadPercentage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/figma_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        tools:text="42% LOAD" />
-                </LinearLayout>
+                    app:headerEndText="42% LOAD"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_pulse"
+                    app:headerTitle="CPU Processor" />
 
                 <!-- Thin Sleek Progress Bar -->
                 <ProgressBar
@@ -289,14 +197,14 @@
         <!-- CARD 3: GPU GRAPHICS                                          -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -304,46 +212,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Badge + Title + Util % -->
-                <LinearLayout
+                <!-- Header with Prominent Metric -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerGpu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="GPU"
-                            android:src="@drawable/ic_bolt"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:text="GPU Graphics"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvGpuUtilPercentage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/figma_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        tools:text="58% UTIL" />
-                </LinearLayout>
+                    app:headerEndText="58% UTIL"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_bolt"
+                    app:headerTitle="GPU Graphics" />
 
                 <!-- Thin Sleek Progress Bar -->
                 <ProgressBar
@@ -382,29 +259,14 @@
                 </LinearLayout>
 
                 <!-- Bottom row: Display Refresh Rate -->
-                <LinearLayout
+                <com.gamestate.monitor.ui.KeyValueRowView
+                    android:id="@+id/rowDisplayRefreshRate"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Display Refresh Rate"
-                        android:textColor="@color/figma_text_muted"
-                        android:textSize="13sp" />
-
-                    <TextView
-                        android:id="@+id/tvDisplayRefreshRate"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/figma_cyan"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        tools:text="60 Hz" />
-                </LinearLayout>
+                    app:rowLabel="Display Refresh Rate"
+                    app:rowValue="60 Hz"
+                    app:rowValueColor="@color/figma_cyan" />
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -412,14 +274,14 @@
         <!-- CARD 4: RAM MEMORY                                            -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -427,42 +289,20 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Badge + Title -->
-                <LinearLayout
+                <!-- Header -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerRam"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="RAM"
-                            android:src="@drawable/ic_database"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="RAM Memory"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:headerIcon="@drawable/ic_database"
+                    app:headerTitle="RAM Memory" />
 
                 <!-- Sub-row: Used / Total on Left, % on Right -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
+                    android:gravity="center_vertical"
                     android:orientation="horizontal">
 
                     <TextView
@@ -479,7 +319,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/figma_cyan"
-                        android:textSize="14sp"
+                        android:textSize="16sp"
                         android:textStyle="bold"
                         tools:text="85%" />
                 </LinearLayout>
@@ -511,14 +351,14 @@
         <!-- CARD 5: BATTERY HEALTH & THERMALS                             -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -526,36 +366,13 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Badge + Title -->
-                <LinearLayout
+                <!-- Header -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerBattery"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Battery"
-                            android:src="@drawable/ic_trending_up"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:text="Battery Health &amp; Thermals"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:headerIcon="@drawable/ic_trending_up"
+                    app:headerTitle="Battery Health &amp; Thermals" />
 
                 <!-- Metrics Rows -->
                 <LinearLayout
@@ -565,78 +382,53 @@
                     android:orientation="vertical">
 
                     <!-- Row 1: Battery Level -->
-                    <LinearLayout
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryLevel"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal">
+                        app:rowLabel="Battery Level"
+                        app:rowValue="85% (Discharging)"
+                        app:rowValueColor="@color/figma_green_health" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Battery Level"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvBatteryLevelState"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/figma_green_health"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="85% (Discharging)" />
-                    </LinearLayout>
-
-                    <!-- Row 2: Core Temperature -->
-                    <LinearLayout
+                    <!-- Row 2: Battery Temperature -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryTemp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        app:rowLabel="Battery Temperature"
+                        app:rowValue="38.5 °C"
+                        app:rowValueColor="@color/figma_amber_temp" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Core Temperature"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
-
-                        <TextView
-                            android:id="@+id/tvBatteryTemp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/figma_amber_temp"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="38.5 °C" />
-                    </LinearLayout>
-
-                    <!-- Row 3: Charge Voltage -->
-                    <LinearLayout
+                    <!-- Row 3: CPU Temperature (if available) -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowCpuTemp"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
+                        app:rowLabel="CPU Temperature"
+                        app:rowValue="42.0 °C"
+                        app:rowValueColor="@color/white" />
 
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Charge Voltage"
-                            android:textColor="@color/figma_text_muted"
-                            android:textSize="13sp" />
+                    <!-- Row 4: Thermal Status (Color Coded: Normal, Warm, Hot, Critical) -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowThermalStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Thermal Status"
+                        app:rowValue="Normal"
+                        app:rowValueColor="@color/thermal_normal" />
 
-                        <TextView
-                            android:id="@+id/tvBatteryVoltage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/white"
-                            android:textSize="13sp"
-                            android:textStyle="bold"
-                            tools:text="4.12 V" />
-                    </LinearLayout>
+                    <!-- Row 5: Charge Voltage -->
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryVoltage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Charge Voltage"
+                        app:rowValue="4.12 V"
+                        app:rowValueColor="@color/white" />
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -645,14 +437,14 @@
         <!-- CARD 6: INTERNAL STORAGE                                      -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="@color/figma_card_stroke"
-            app:strokeWidth="1dp">
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -660,46 +452,15 @@
                 android:orientation="vertical"
                 android:padding="16dp">
 
-                <!-- Header Row: Badge + Title + Used % -->
-                <LinearLayout
+                <!-- Header with Prominent Metric -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerStorage"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <FrameLayout
-                        android:layout_width="36dp"
-                        android:layout_height="36dp"
-                        android:background="@drawable/bg_icon_badge_squircle">
-
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_gravity="center"
-                            android:contentDescription="Storage"
-                            android:src="@drawable/ic_folder"
-                            app:tint="@color/figma_cyan" />
-                    </FrameLayout>
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:text="Internal Storage"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvStoragePercentage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/figma_cyan"
-                        android:textSize="14sp"
-                        android:textStyle="bold"
-                        tools:text="87% USED" />
-                </LinearLayout>
+                    app:headerEndText="87% USED"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_folder"
+                    app:headerTitle="Internal Storage" />
 
                 <!-- Thin Sleek Progress Bar -->
                 <ProgressBar
@@ -740,15 +501,17 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 7: FLOATING GAMING OVERLAY HUD (Image 2 style, in Cyan)   -->
+        <!-- CARD 7: FLOATING GAMING OVERLAY HUD                           -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:cardBackgroundColor="@color/figma_card_bg"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator"
             app:strokeColor="@color/figma_cyan"
             app:strokeWidth="1.5dp">
 
@@ -759,39 +522,15 @@
                 android:padding="16dp">
 
                 <!-- Header Row: Display Icon + Title + Status Badge -->
-                <LinearLayout
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerOverlay"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:orientation="horizontal">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:contentDescription="Gaming Overlay"
-                        android:src="@drawable/ic_display"
-                        app:tint="@color/figma_cyan" />
-
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="12dp"
-                        android:layout_weight="1"
-                        android:text="Floating Gaming HUD"
-                        android:textColor="@color/white"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvOverlayBadgeStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="@drawable/bg_status_badge"
-                        android:text="INACTIVE"
-                        android:textColor="@color/figma_cyan"
-                        android:textSize="10sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
+                    app:headerEndBadgeBackground="@drawable/bg_status_badge"
+                    app:headerEndText="INACTIVE"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_display"
+                    app:headerTitle="Floating Gaming HUD" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -816,7 +555,7 @@
                     app:iconGravity="textStart"
                     app:iconTint="@color/black" />
 
-                <!-- In-Game Hook Mode & ADB Unlock -->
+                <!-- Enhanced FPS Detection & ADB Unlock -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -829,7 +568,7 @@
                         android:id="@+id/tvDumpStatus"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="In-Game Hook: Active Display Pacing"
+                        android:text="Enhanced FPS Detection"
                         android:textColor="@color/figma_cyan"
                         android:textSize="11sp"
                         android:textStyle="bold" />
@@ -839,7 +578,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="Run one-time ADB command to unlock deep SurfaceFlinger game engine hooking."
+                        android:text="Enable advanced game performance monitoring through ADB."
                         android:textColor="@color/figma_text_muted"
                         android:textSize="10sp" />
 
