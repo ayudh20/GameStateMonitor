@@ -271,7 +271,176 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 4: RAM MEMORY                                            -->
+        <!-- CARD 4: FPS PERFORMANCE (Modular Engine)                      -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator"
+            app:strokeColor="@color/figma_cyan"
+            app:strokeWidth="1.5dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Header: Icon + Title + Live Status Badge -->
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerFps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndBadgeBackground="@drawable/bg_status_badge"
+                    app:headerEndText="NO GAME"
+                    app:headerEndTextColor="@color/figma_text_muted"
+                    app:headerIcon="@drawable/ic_pulse"
+                    app:headerTitle="FPS Performance" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Modular frame pacing architecture reading genuine SurfaceFlinger &amp; hardware timestamps with zero estimation."
+                    android:textColor="@color/figma_text_muted"
+                    android:textSize="12sp" />
+
+                <!-- FPS Status -->
+                <com.gamestate.monitor.ui.KeyValueRowView
+                    android:id="@+id/rowFpsStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    app:rowLabel="FPS Status"
+                    app:rowValue="No Game Detected"
+                    app:rowValueColor="@color/white" />
+
+                <!-- FPS Source -->
+                <com.gamestate.monitor.ui.KeyValueRowView
+                    android:id="@+id/rowFpsSource"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:rowLabel="FPS Source"
+                    app:rowValue="SurfaceFlinger (ADB)"
+                    app:rowValueColor="@color/figma_cyan" />
+
+                <!-- Monitoring Availability -->
+                <com.gamestate.monitor.ui.KeyValueRowView
+                    android:id="@+id/rowFpsAvailability"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:rowLabel="Monitoring Availability"
+                    app:rowValue="Requires ADB DUMP permission"
+                    app:rowValueColor="@color/figma_text_muted" />
+
+                <!-- Active Game -->
+                <com.gamestate.monitor.ui.KeyValueRowView
+                    android:id="@+id/rowActiveGame"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:rowLabel="Active Game"
+                    app:rowValue="None Detected"
+                    app:rowValueColor="@color/figma_cyan" />
+
+                <!-- Frame Pacing & Diagnostics Sub-panel (Future-Ready) -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_inner_container"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Real Pacing Metrics"
+                            android:textColor="@color/white"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@drawable/bg_chip_figma_inactive"
+                            android:paddingHorizontal="6dp"
+                            android:paddingVertical="2dp"
+                            android:text="Zero Fake Data"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowTargetRefreshRate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Target Display Refresh"
+                        app:rowValue="60 Hz"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowFrameTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Average Frame Time"
+                        app:rowValue="Awaiting backend"
+                        app:rowValueColor="@color/figma_text_muted" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowOnePercentLow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="1% Low FPS"
+                        app:rowValue="Awaiting backend"
+                        app:rowValueColor="@color/figma_text_muted" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDroppedFrames"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Dropped Frames"
+                        app:rowValue="0 (Awaiting backend)"
+                        app:rowValueColor="@color/figma_text_muted" />
+                </LinearLayout>
+
+                <!-- Action Button for Granting Usage Access or Copying ADB -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFpsAction"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="12dp"
+                    android:padding="0dp"
+                    android:text="Enable Game Detection (Usage Access)"
+                    android:textColor="@color/figma_cyan"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/figma_cyan" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 5: RAM MEMORY                                            -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.GameState.Card"
@@ -434,7 +603,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 6: INTERNAL STORAGE                                      -->
+        <!-- CARD 7: INTERNAL STORAGE                                      -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.GameState.Card"
@@ -501,7 +670,7 @@
         </com.google.android.material.card.MaterialCardView>
 
         <!-- ============================================================ -->
-        <!-- CARD 7: FLOATING GAMING OVERLAY HUD                           -->
+        <!-- CARD 8: FLOATING GAMING OVERLAY HUD                           -->
         <!-- ============================================================ -->
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.GameState.Card"

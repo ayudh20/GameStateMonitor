@@ -28,10 +28,18 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
+import com.gamestate.monitor.fps.AvailabilityStatus;
+import com.gamestate.monitor.fps.FpsBackend;
+import com.gamestate.monitor.fps.FpsBackendManager;
+import com.gamestate.monitor.fps.FpsMetrics;
+import com.gamestate.monitor.fps.FpsMonitorState;
+import com.gamestate.monitor.fps.GameDetector;
+import com.gamestate.monitor.fps.GameStateInfo;
 import com.gamestate.monitor.model.CpuInfo;
 import com.gamestate.monitor.model.DeviceInfo;
 import com.gamestate.monitor.model.GpuInfo;
 import com.gamestate.monitor.model.PerformanceStats;
+import com.gamestate.monitor.service.GameStateService;
 import com.gamestate.monitor.service.OverlayService;
 import com.gamestate.monitor.ui.CardHeaderView;
 import com.gamestate.monitor.ui.KeyValueRowView;
@@ -45,7 +53,7 @@ import com.google.android.material.button.MaterialButton;
  * MainActivity
  * ------------
  * Controller for GameState Monitor, bound 1:1 to the Figma UI specification with
- * the restored Floating Gaming HUD card in Cyan.
+ * the restored Floating Gaming HUD card and the modular zero-fake FPS architecture.
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -72,26 +80,39 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvGpuFrequency;
     private TextView tvDisplayRefreshRate;
 
-    // Card 4: RAM Memory
+    // Card 4: FPS Performance
+    private CardHeaderView headerFps;
+    private TextView tvFpsBadgeStatus;
+    private KeyValueRowView rowFpsStatus;
+    private KeyValueRowView rowFpsSource;
+    private KeyValueRowView rowFpsAvailability;
+    private KeyValueRowView rowActiveGame;
+    private KeyValueRowView rowTargetRefreshRate;
+    private KeyValueRowView rowFrameTime;
+    private KeyValueRowView rowOnePercentLow;
+    private KeyValueRowView rowDroppedFrames;
+    private MaterialButton btnFpsAction;
+
+    // Card 5: RAM Memory
     private TextView tvRamUsageValues;
     private TextView tvRamPercentage;
     private ProgressBar pbRamUsage;
     private TextView tvRamAvailable;
 
-    // Card 5: Battery Health & Thermals
+    // Card 6: Battery Health & Thermals
     private TextView tvBatteryLevelState;
     private TextView tvBatteryTemp;
     private TextView tvCpuTemp;
     private TextView tvThermalStatus;
     private TextView tvBatteryVoltage;
 
-    // Card 6: Internal Storage
+    // Card 7: Internal Storage
     private TextView tvStoragePercentage;
     private ProgressBar pbStorageUsage;
     private TextView tvStorageUsageValues;
     private TextView tvStorageAvailable;
 
-    // Card 7: Floating Gaming Overlay Controls
+    // Card 8: Floating Gaming Overlay Controls
     private TextView tvOverlayBadgeStatus;
     private MaterialButton btnToggleOverlay;
     private MaterialButton btnCopyAdbCommand;
@@ -107,6 +128,8 @@ public class MainActivity extends AppCompatActivity {
     private CpuMonitor cpuMonitor;
     private GpuMonitor gpuMonitor;
     private GpuInfo cachedGpuInfo;
+    private FpsBackendManager fpsBackendManager;
+    private GameDetector gameDetector;
 
     // App diagnostic start time for session runtime counter
     private long sessionStartTimeMs;
@@ -121,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
             updateRealtimeMetrics();
             updateDiagnosticRuntime();
             updateOverlayButtonState();
+            updateFpsCardMetrics();
             autoRefreshHandler.postDelayed(this, REFRESH_INTERVAL_MS);
         }
     };
@@ -131,6 +155,16 @@ public class MainActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (OverlayService.ACTION_OVERLAY_STATE_CHANGED.equals(intent.getAction())) {
                 updateOverlayButtonState();
+            }
+        }
+    };
+
+    // Broadcast receiver to listen for GameStateService updates
+    private final BroadcastReceiver gameStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (GameStateService.ACTION_GAME_STATE_UPDATED.equals(intent.getAction())) {
+                updateFpsCardMetrics();
             }
         }
     };
@@ -157,6 +191,15 @@ public class MainActivity extends AppCompatActivity {
         cpuMonitor = new CpuMonitor();
         gpuMonitor = new GpuMonitor();
         cachedGpuInfo = gpuMonitor.getGpuInfo();
+        fpsBackendManager = new FpsBackendManager(this, statsManager.getScreenRefreshRate());
+        gameDetector = new GameDetector(this);
+
+        // Start GameStateService to monitor foreground game states
+        Intent gameServiceIntent = new Intent(this, GameStateService.class);
+        try {
+            startService(gameServiceIntent);
+        } catch (Exception ignored) {
+        }
 
         // 2. Find and assign all UI view references
         bindViews();
@@ -168,6 +211,7 @@ public class MainActivity extends AppCompatActivity {
         btnRefresh.setOnClickListener(v -> {
             updateRealtimeMetrics();
             updateDiagnosticRuntime();
+            updateFpsCardMetrics();
             Toast.makeText(MainActivity.this, "Statistics Updated", Toast.LENGTH_SHORT).show();
         });
 
@@ -182,20 +226,27 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 6. Request notification permission on Android 13+
+        // 6. Action button for FPS Performance card
+        btnFpsAction.setOnClickListener(v -> handleFpsActionClick());
+
+        // 7. Request notification permission on Android 13+
         checkNotificationPermission();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        IntentFilter filter = new IntentFilter(OverlayService.ACTION_OVERLAY_STATE_CHANGED);
+        IntentFilter overlayFilter = new IntentFilter(OverlayService.ACTION_OVERLAY_STATE_CHANGED);
+        IntentFilter gameFilter = new IntentFilter(GameStateService.ACTION_GAME_STATE_UPDATED);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(overlayStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(overlayStateReceiver, overlayFilter, Context.RECEIVER_NOT_EXPORTED);
+            registerReceiver(gameStateReceiver, gameFilter, Context.RECEIVER_NOT_EXPORTED);
         } else {
-            registerReceiver(overlayStateReceiver, filter);
+            registerReceiver(overlayStateReceiver, overlayFilter);
+            registerReceiver(gameStateReceiver, gameFilter);
         }
         updateOverlayButtonState();
+        updateFpsCardMetrics();
     }
 
     @Override
@@ -204,6 +255,7 @@ public class MainActivity extends AppCompatActivity {
         updateRealtimeMetrics();
         updateDiagnosticRuntime();
         updateOverlayButtonState();
+        updateFpsCardMetrics();
 
         autoRefreshHandler.postDelayed(autoRefreshRunnable, REFRESH_INTERVAL_MS);
     }
@@ -219,6 +271,10 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         try {
             unregisterReceiver(overlayStateReceiver);
+        } catch (IllegalArgumentException ignored) {
+        }
+        try {
+            unregisterReceiver(gameStateReceiver);
         } catch (IllegalArgumentException ignored) {
         }
     }
@@ -368,13 +424,26 @@ public class MainActivity extends AppCompatActivity {
         KeyValueRowView rowDisplayRefreshRate = findViewById(R.id.rowDisplayRefreshRate);
         tvDisplayRefreshRate = rowDisplayRefreshRate.getValueTextView();
 
-        // Card 4: RAM Memory
+        // Card 4: FPS Performance
+        headerFps = findViewById(R.id.headerFps);
+        tvFpsBadgeStatus = headerFps.getEndTextView();
+        rowFpsStatus = findViewById(R.id.rowFpsStatus);
+        rowFpsSource = findViewById(R.id.rowFpsSource);
+        rowFpsAvailability = findViewById(R.id.rowFpsAvailability);
+        rowActiveGame = findViewById(R.id.rowActiveGame);
+        rowTargetRefreshRate = findViewById(R.id.rowTargetRefreshRate);
+        rowFrameTime = findViewById(R.id.rowFrameTime);
+        rowOnePercentLow = findViewById(R.id.rowOnePercentLow);
+        rowDroppedFrames = findViewById(R.id.rowDroppedFrames);
+        btnFpsAction = findViewById(R.id.btnFpsAction);
+
+        // Card 5: RAM Memory
         tvRamUsageValues = findViewById(R.id.tvRamUsageValues);
         tvRamPercentage = findViewById(R.id.tvRamPercentage);
         pbRamUsage = findViewById(R.id.pbRamUsage);
         tvRamAvailable = findViewById(R.id.tvRamAvailable);
 
-        // Card 5: Battery Health & Thermals
+        // Card 6: Battery Health & Thermals
         KeyValueRowView rowBatteryLevel = findViewById(R.id.rowBatteryLevel);
         KeyValueRowView rowBatteryTemp = findViewById(R.id.rowBatteryTemp);
         KeyValueRowView rowCpuTemp = findViewById(R.id.rowCpuTemp);
@@ -387,14 +456,14 @@ public class MainActivity extends AppCompatActivity {
         tvThermalStatus = rowThermalStatus.getValueTextView();
         tvBatteryVoltage = rowBatteryVoltage.getValueTextView();
 
-        // Card 6: Internal Storage
+        // Card 7: Internal Storage
         CardHeaderView headerStorage = findViewById(R.id.headerStorage);
         tvStoragePercentage = headerStorage.getEndTextView();
         pbStorageUsage = findViewById(R.id.pbStorageUsage);
         tvStorageUsageValues = findViewById(R.id.tvStorageUsageValues);
         tvStorageAvailable = findViewById(R.id.tvStorageAvailable);
 
-        // Card 7: Floating Gaming Overlay
+        // Card 8: Floating Gaming Overlay
         CardHeaderView headerOverlay = findViewById(R.id.headerOverlay);
         tvOverlayBadgeStatus = headerOverlay.getEndTextView();
         btnToggleOverlay = findViewById(R.id.btnToggleOverlay);
@@ -537,5 +606,121 @@ public class MainActivity extends AppCompatActivity {
         pbStorageUsage.setProgress(stats.getStorageUsagePercentage());
         tvStorageUsageValues.setText(String.format("Used: %s / Total: %s", usedStorageStr, totalStorageStr));
         tvStorageAvailable.setText(String.format("%s Free", freeStorageStr));
+    }
+
+    /**
+     * Synchronizes the dedicated FPS Performance card with GameStateService
+     * and the active FpsBackend. Strictly adheres to zero fake/estimated numbers.
+     */
+    private void updateFpsCardMetrics() {
+        if (headerFps == null || fpsBackendManager == null) return;
+
+        GameStateInfo gameState = GameStateService.getCurrentGameState();
+        FpsMonitorState monitorState = GameStateService.getCurrentMonitorState();
+        FpsMetrics metrics = GameStateService.getCurrentMetrics();
+        FpsBackend activeBackend = fpsBackendManager.getActiveBackend();
+        AvailabilityStatus availabilityStatus = fpsBackendManager.getPrimaryAvailabilityStatus();
+
+        // 1. Header Badge State
+        headerFps.setEndText(monitorState.getBadgeText());
+        int badgeColor;
+        switch (monitorState) {
+            case FPS_MONITORING_ACTIVE:
+                badgeColor = ContextCompat.getColor(this, R.color.figma_cyan);
+                break;
+            case WAITING_FOR_BACKEND:
+                badgeColor = ContextCompat.getColor(this, R.color.thermal_warm);
+                break;
+            case NO_GAME_DETECTED:
+            default:
+                badgeColor = ContextCompat.getColor(this, R.color.figma_text_muted);
+                break;
+        }
+        headerFps.setEndTextColor(badgeColor);
+
+        // 2. FPS Status
+        rowFpsStatus.setValue(monitorState.getDisplayStatus());
+        rowFpsStatus.setValueColor(badgeColor);
+
+        // 3. FPS Source
+        rowFpsSource.setValue(activeBackend.getName());
+
+        // 4. Monitoring Availability
+        rowFpsAvailability.setValue(availabilityStatus.getDescription());
+        rowFpsAvailability.setValueColor(availabilityStatus.isAvailable()
+                ? ContextCompat.getColor(this, R.color.figma_green_health)
+                : ContextCompat.getColor(this, R.color.figma_text_muted));
+
+        // 5. Active Game
+        rowActiveGame.setValue(gameState.getFormattedTitle());
+        rowActiveGame.setValueColor(gameState.hasGame()
+                ? ContextCompat.getColor(this, R.color.figma_cyan)
+                : ContextCompat.getColor(this, R.color.figma_text_muted));
+
+        // 6. Frame Pacing Engine Sub-panel (Zero Fake Values)
+        float refreshRate = statsManager != null ? statsManager.getScreenRefreshRate() : 60.0f;
+        if (refreshRate <= 0) refreshRate = 60.0f;
+        rowTargetRefreshRate.setValue(String.format("%.0f Hz", refreshRate));
+
+        if (metrics != null && metrics.hasValidFrameTime()) {
+            rowFrameTime.setValue(String.format("%.1f ms", metrics.getAverageFrameTimeMs()));
+            rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            rowFrameTime.setValue("Awaiting backend");
+            rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+        }
+
+        if (metrics != null && metrics.hasValidOnePercentLow()) {
+            rowOnePercentLow.setValue(String.format("%.1f FPS", metrics.getOnePercentLowFps()));
+            rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            rowOnePercentLow.setValue("Awaiting backend");
+            rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+        }
+
+        if (metrics != null && metrics.hasValidFps()) {
+            rowDroppedFrames.setValue(String.format("%d dropped / %d janks", metrics.getDroppedFrames(), metrics.getJankCount()));
+            rowDroppedFrames.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            rowDroppedFrames.setValue("0 (Awaiting backend)");
+            rowDroppedFrames.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+        }
+
+        // 7. Update Action Button
+        if (gameDetector != null && !gameDetector.hasUsageStatsPermission()) {
+            btnFpsAction.setText("Enable Game Detection (Usage Access)");
+            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
+            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (checkSelfPermission("android.permission.DUMP") != PackageManager.PERMISSION_GRANTED) {
+            btnFpsAction.setText("Copy ADB Unlock Command");
+            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
+            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            btnFpsAction.setText("FPS Monitoring Ready (ADB Hook Active)");
+            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_green_health)));
+            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_green_health));
+        }
+    }
+
+    private void handleFpsActionClick() {
+        if (gameDetector != null && !gameDetector.hasUsageStatsPermission()) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Usage Access Required")
+                    .setMessage("To detect foreground games automatically, please enable Usage Access for GameState Monitor in the following settings screen.")
+                    .setPositiveButton("Open Settings", (dialog, which) -> {
+                        startActivity(gameDetector.getUsageAccessSettingsIntent());
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        } else if (checkSelfPermission("android.permission.DUMP") != PackageManager.PERMISSION_GRANTED) {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+            ClipData clip = ClipData.newPlainText("ADB Command", "adb shell pm grant " + getPackageName() + " android.permission.DUMP");
+            if (clipboard != null) {
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(this, "ADB command copied! Run via terminal to grant DUMP.", Toast.LENGTH_LONG).show();
+            }
+        } else {
+            Toast.makeText(this, "FPS monitoring backend is authorized and active.", Toast.LENGTH_SHORT).show();
+        }
     }
 }

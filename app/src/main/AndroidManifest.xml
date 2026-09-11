@@ -13,6 +13,11 @@
         android:name="android.permission.DUMP"
         tools:ignore="ProtectedPermissions" />
 
+    <!-- Permission to detect active foreground games via UsageStatsManager -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -41,6 +46,12 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Gaming performance monitoring floating HUD overlay" />
         </service>
+
+        <!-- Game State & FPS Monitoring Coordinator Service -->
+        <service
+            android:name=".service.GameStateService"
+            android:enabled="true"
+            android:exported="false" />
 
     </application>
 
