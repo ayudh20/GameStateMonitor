@@ -151,6 +151,7 @@ public class GameStateService extends Service implements FpsDataCallback {
     public void onMetricsUpdated(FpsMetrics metrics) {
         if (metrics != null) {
             currentMetrics = metrics;
+            broadcastStateUpdate(currentGameState, currentMonitorState);
         }
     }
 

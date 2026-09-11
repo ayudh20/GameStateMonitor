@@ -87,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private KeyValueRowView rowFpsSource;
     private KeyValueRowView rowFpsAvailability;
     private KeyValueRowView rowActiveGame;
+    private KeyValueRowView rowCurrentFps;
     private KeyValueRowView rowTargetRefreshRate;
     private KeyValueRowView rowFrameTime;
     private KeyValueRowView rowOnePercentLow;
@@ -431,6 +432,7 @@ public class MainActivity extends AppCompatActivity {
         rowFpsSource = findViewById(R.id.rowFpsSource);
         rowFpsAvailability = findViewById(R.id.rowFpsAvailability);
         rowActiveGame = findViewById(R.id.rowActiveGame);
+        rowCurrentFps = findViewById(R.id.rowCurrentFps);
         rowTargetRefreshRate = findViewById(R.id.rowTargetRefreshRate);
         rowFrameTime = findViewById(R.id.rowFrameTime);
         rowOnePercentLow = findViewById(R.id.rowOnePercentLow);
@@ -636,7 +638,6 @@ public class MainActivity extends AppCompatActivity {
         AvailabilityStatus availabilityStatus = fpsBackendManager.getPrimaryAvailabilityStatus();
 
         // 1. Header Badge State
-        headerFps.setEndText(monitorState.getBadgeText());
         int badgeColor;
         switch (monitorState) {
             case FPS_MONITORING_ACTIVE:
@@ -650,7 +651,14 @@ public class MainActivity extends AppCompatActivity {
                 badgeColor = ContextCompat.getColor(this, R.color.figma_text_muted);
                 break;
         }
-        headerFps.setEndTextColor(badgeColor);
+
+        if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE && metrics != null && metrics.hasValidFps()) {
+            headerFps.setEndText(String.format("ACTIVE • %.0f FPS", metrics.getCurrentFps()));
+            headerFps.setEndTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            headerFps.setEndText(monitorState.getBadgeText());
+            headerFps.setEndTextColor(badgeColor);
+        }
 
         // 2. FPS Status
         rowFpsStatus.setValue(monitorState.getDisplayStatus());
@@ -672,6 +680,17 @@ public class MainActivity extends AppCompatActivity {
                 : ContextCompat.getColor(this, R.color.figma_text_muted));
 
         // 6. Frame Pacing Engine Sub-panel (Zero Fake Values)
+        if (metrics != null && metrics.hasValidFps()) {
+            rowCurrentFps.setValue(String.format("%.1f FPS", metrics.getCurrentFps()));
+            rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
+            rowCurrentFps.setValue("Sampling frames...");
+            rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            rowCurrentFps.setValue("Awaiting backend");
+            rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+        }
+
         float refreshRate = statsManager != null ? statsManager.getScreenRefreshRate() : 60.0f;
         if (refreshRate <= 0) refreshRate = 60.0f;
         rowTargetRefreshRate.setValue(String.format("%.0f Hz", refreshRate));
@@ -679,6 +698,9 @@ public class MainActivity extends AppCompatActivity {
         if (metrics != null && metrics.hasValidFrameTime()) {
             rowFrameTime.setValue(String.format("%.1f ms", metrics.getAverageFrameTimeMs()));
             rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
+            rowFrameTime.setValue("Sampling frames...");
+            rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         } else {
             rowFrameTime.setValue("Awaiting backend");
             rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
@@ -687,6 +709,9 @@ public class MainActivity extends AppCompatActivity {
         if (metrics != null && metrics.hasValidOnePercentLow()) {
             rowOnePercentLow.setValue(String.format("%.1f FPS", metrics.getOnePercentLowFps()));
             rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
+            rowOnePercentLow.setValue("Sampling frames...");
+            rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         } else {
             rowOnePercentLow.setValue("Awaiting backend");
             rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
@@ -696,7 +721,7 @@ public class MainActivity extends AppCompatActivity {
             rowDroppedFrames.setValue(String.format("%d dropped / %d janks", metrics.getDroppedFrames(), metrics.getJankCount()));
             rowDroppedFrames.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
         } else {
-            rowDroppedFrames.setValue("0 (Awaiting backend)");
+            rowDroppedFrames.setValue("0 (Awaiting frames)");
             rowDroppedFrames.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         }
 

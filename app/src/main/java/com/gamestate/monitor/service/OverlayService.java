@@ -297,52 +297,61 @@ public class OverlayService extends Service {
          CpuInfo cpuInfo = cpuMonitor != null ? cpuMonitor.getCpuInfo() : null;
 
          // 1. Compact Pill Updates
-         if (cpuInfo != null) {
-             tvOverlayCpu.setText(String.format("CPU %d%%", cpuInfo.getUsagePercentage()));
-         }
+        if (cpuInfo != null) {
+            tvOverlayCpu.setText(String.format("CPU %d%%", cpuInfo.getUsagePercentage()));
+        }
 
-         if (gpuMonitor != null) {
-             GpuInfo liveGpu = gpuMonitor.sampleGpuInfo();
-             int gpuUsage = liveGpu.getGpuUsagePercentage();
-             tvOverlayGpu.setText(String.format("GPU %d%%", gpuUsage));
-         }
+        com.gamestate.monitor.fps.GameStateInfo gameState = GameStateService.getCurrentGameState();
+        com.gamestate.monitor.fps.FpsMetrics fpsMetrics = GameStateService.getCurrentMetrics();
+        if (gameState != null && gameState.hasGame() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
+            tvOverlayGpu.setText(String.format("FPS %.0f", fpsMetrics.getCurrentFps()));
+        } else if (gpuMonitor != null) {
+            GpuInfo liveGpu = gpuMonitor.sampleGpuInfo();
+            int gpuUsage = liveGpu.getGpuUsagePercentage();
+            tvOverlayGpu.setText(String.format("GPU %d%%", gpuUsage));
+        }
 
-         tvOverlayRam.setText(String.format("RAM %d%%", stats.getRamUsagePercentage()));
-         tvOverlayTemp.setText(String.format("%.1f°C", stats.getBatteryTemperatureC()));
+        tvOverlayRam.setText(String.format("RAM %d%%", stats.getRamUsagePercentage()));
+        tvOverlayTemp.setText(String.format("%.1f°C", stats.getBatteryTemperatureC()));
 
-         // Update status dot glow
-         int statusColor;
-         switch (stats.getSystemStatus()) {
-             case HIGH_LOAD:
-                 statusColor = ContextCompat.getColor(this, R.color.status_high_load);
-                 break;
-             case MODERATE:
-                 statusColor = ContextCompat.getColor(this, R.color.status_moderate);
-                 break;
-             case OPTIMAL:
-             default:
-                 statusColor = ContextCompat.getColor(this, R.color.status_optimal);
-                 break;
-         }
-         vOverlayStatusDot.setBackgroundTintList(ColorStateList.valueOf(statusColor));
+        // Update status dot glow
+        int statusColor;
+        switch (stats.getSystemStatus()) {
+            case HIGH_LOAD:
+                statusColor = ContextCompat.getColor(this, R.color.status_high_load);
+                break;
+            case MODERATE:
+                statusColor = ContextCompat.getColor(this, R.color.status_moderate);
+                break;
+            case OPTIMAL:
+            default:
+                statusColor = ContextCompat.getColor(this, R.color.status_optimal);
+                break;
+        }
+        vOverlayStatusDot.setBackgroundTintList(ColorStateList.valueOf(statusColor));
 
-         // 2. Expanded Panel Updates (if visible)
-         if (overlayExpandedPanel.getVisibility() == View.VISIBLE) {
-             if (cpuInfo != null) {
-                 tvOverlayCpuDetails.setText(String.format("CPU: %d%% (%d Cores @ %.2f GHz)",
-                         cpuInfo.getUsagePercentage(), cpuInfo.getCoreCount(), cpuInfo.getAverageFrequencyGhz()));
-             }
+        // 2. Expanded Panel Updates (if visible)
+        if (overlayExpandedPanel.getVisibility() == View.VISIBLE) {
+            if (cpuInfo != null) {
+                tvOverlayCpuDetails.setText(String.format("CPU: %d%% (%d Cores @ %.2f GHz)",
+                        cpuInfo.getUsagePercentage(), cpuInfo.getCoreCount(), cpuInfo.getAverageFrequencyGhz()));
+            }
 
-             if (cachedGpuInfo != null) {
-                 GpuInfo liveGpu = gpuMonitor != null ? gpuMonitor.sampleGpuInfo() : cachedGpuInfo;
-                 int gpuUsage = liveGpu.getGpuUsagePercentage();
-                 if (gpuUsage >= 0) {
-                     tvOverlayGpuDetails.setText(String.format("GPU: %d%% (%s)", gpuUsage, cachedGpuInfo.getRenderer()));
-                 } else {
-                     tvOverlayGpuDetails.setText(String.format("GPU: %s (%s)",
-                             cachedGpuInfo.getRenderer(), cachedGpuInfo.getVendor()));
-                 }
-             }
+            if (gameState != null && gameState.hasGame() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
+                tvOverlayGpuDetails.setText(String.format("FPS: %.1f FPS • %.1f ms (%s)",
+                        fpsMetrics.getCurrentFps(),
+                        fpsMetrics.hasValidFrameTime() ? fpsMetrics.getAverageFrameTimeMs() : (1000.0f / fpsMetrics.getCurrentFps()),
+                        gameState.getAppName()));
+            } else if (cachedGpuInfo != null) {
+                GpuInfo liveGpu = gpuMonitor != null ? gpuMonitor.sampleGpuInfo() : cachedGpuInfo;
+                int gpuUsage = liveGpu.getGpuUsagePercentage();
+                if (gpuUsage >= 0) {
+                    tvOverlayGpuDetails.setText(String.format("GPU: %d%% (%s)", gpuUsage, cachedGpuInfo.getRenderer()));
+                } else {
+                    tvOverlayGpuDetails.setText(String.format("GPU: %s (%s)",
+                            cachedGpuInfo.getRenderer(), cachedGpuInfo.getVendor()));
+                }
+            }
 
              tvOverlayBattery.setText(String.format("Battery: %d%% (%s)",
                      stats.getBatteryLevel(), stats.getBatteryStatus()));

@@ -387,6 +387,15 @@
                     </LinearLayout>
 
                     <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowCurrentFps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Real-Time FPS"
+                        app:rowValue="Awaiting frames"
+                        app:rowValueColor="@color/figma_text_muted" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
                         android:id="@+id/rowTargetRefreshRate"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
