@@ -2,6 +2,7 @@ package com.gamestate.monitor.fps;
 
 import android.app.AppOpsManager;
 import android.app.usage.UsageEvents;
+import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
@@ -13,14 +14,21 @@ import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * GameDetector
  * ------------
- * Responsible for detecting the active foreground package and determining
- * whether it belongs to a 2D/3D game.
+ * Responsible for detecting the active or currently running game.
+ *
+ * Uses a multi-tiered detection pipeline:
+ * 1. SurfaceFlinger Layer Inspection (Active 3D Game / SurfaceView layers via ADB DUMP)
+ * 2. Activity Stack & Focus Inspection (dumpsys activity via ADB DUMP)
+ * 3. UsageStatsManager Events with intelligent system exclusion filtering
+ * 4. Recent UsageStats query fallback
  */
 public class GameDetector {
 
@@ -30,16 +38,26 @@ public class GameDetector {
     private final PackageManager packageManager;
     private final Set<String> systemExclusions = new HashSet<>();
 
+    // Cache the last identified game so temporary task switches to GameState Monitor
+    // or system quickstep recents keep the target game active
+    private String lastIdentifiedGamePackage = null;
+    private long lastIdentifiedGameTimestampMs = 0;
+    private static final long GAME_RECENCY_WINDOW_MS = 15 * 60 * 1000; // 15 minutes
+
     public GameDetector(Context context) {
         this.context = context.getApplicationContext();
         this.packageManager = this.context.getPackageManager();
 
-        // Populate common system UI and home launchers to ignore
+        // Populate system UI, launchers, keyboards, and monitor app to ignore as targets
         systemExclusions.add("com.android.systemui");
         systemExclusions.add("com.google.android.apps.nexuslauncher");
         systemExclusions.add("com.sec.android.app.launcher");
         systemExclusions.add("com.miui.home");
-        systemExclusions.add(context.getPackageName()); // Ignore our own monitor app
+        systemExclusions.add("com.oppo.launcher");
+        systemExclusions.add("com.oneplus.launcher");
+        systemExclusions.add("com.huawei.android.launcher");
+        systemExclusions.add("com.google.android.inputmethod.latin"); // Gboard
+        systemExclusions.add(context.getPackageName()); // Ignore GameState Monitor itself
     }
 
     /**
@@ -69,62 +87,73 @@ public class GameDetector {
     }
 
     /**
-     * Samples the current foreground application and categorizes it.
+     * Samples the current foreground or active game and categorizes it.
      */
     public GameStateInfo detectForegroundGame() {
-        String foregroundPackage = getForegroundPackageName();
+        String activeGamePkg = resolveActiveGamePackage();
 
-        if (foregroundPackage == null || foregroundPackage.isEmpty() || systemExclusions.contains(foregroundPackage)) {
-            return GameStateInfo.none();
+        if (activeGamePkg != null && !activeGamePkg.isEmpty()) {
+            boolean isGame = isGamePackage(activeGamePkg);
+            String appName = getAppLabel(activeGamePkg);
+            lastIdentifiedGamePackage = activeGamePkg;
+            lastIdentifiedGameTimestampMs = System.currentTimeMillis();
+
+            return new GameStateInfo(
+                    activeGamePkg,
+                    appName,
+                    isGame,
+                    true,
+                    System.currentTimeMillis()
+            );
         }
 
-        // Determine if this package is categorized as a game
-        boolean isGame = isGamePackage(foregroundPackage);
-        String appName = getAppLabel(foregroundPackage);
+        // Check if a game was active recently within the recency window
+        if (lastIdentifiedGamePackage != null &&
+                (System.currentTimeMillis() - lastIdentifiedGameTimestampMs < GAME_RECENCY_WINDOW_MS)) {
+            String appName = getAppLabel(lastIdentifiedGamePackage);
+            return new GameStateInfo(
+                    lastIdentifiedGamePackage,
+                    appName,
+                    true,
+                    false, // in background/recents
+                    lastIdentifiedGameTimestampMs
+            );
+        }
 
-        return new GameStateInfo(
-                foregroundPackage,
-                appName,
-                isGame,
-                true,
-                System.currentTimeMillis()
-        );
+        return GameStateInfo.none();
     }
 
     /**
-     * Resolves the current foreground package using UsageStatsManager or DUMP fallback.
+     * Multi-tiered resolver to find the active game package.
      */
-    private String getForegroundPackageName() {
-        // 1. Try UsageStatsManager (Recommended Android API)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && hasUsageStatsPermission()) {
-            UsageStatsManager usageStatsManager =
-                    (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-            if (usageStatsManager != null) {
-                long endTime = System.currentTimeMillis();
-                long startTime = endTime - 10000; // Check last 10 seconds
+    private String resolveActiveGamePackage() {
+        boolean hasDump = context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
 
-                UsageEvents events = usageStatsManager.queryEvents(startTime, endTime);
-                UsageEvents.Event event = new UsageEvents.Event();
-                String lastPackage = null;
+        // Tier 1: Check SurfaceFlinger for running game SurfaceView layers (Requires DUMP)
+        if (hasDump) {
+            String sfGame = getActiveGameFromSurfaceFlinger();
+            if (sfGame != null) {
+                return sfGame;
+            }
 
-                while (events.hasNextEvent()) {
-                    events.getNextEvent(event);
-                    if (event.getEventType() == UsageEvents.Event.ACTIVITY_RESUMED) {
-                        lastPackage = event.getPackageName();
-                    }
-                }
-
-                if (lastPackage != null && !lastPackage.isEmpty()) {
-                    return lastPackage;
-                }
+            // Tier 2: Check activity stack (dumpsys activity activities)
+            String activityGame = getActiveGameFromActivityStack();
+            if (activityGame != null) {
+                return activityGame;
             }
         }
 
-        // 2. Fallback: Query via ADB dumpsys window if DUMP permission is granted
-        if (context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED) {
-            String pkgFromDump = getForegroundPackageFromDumpsys();
-            if (pkgFromDump != null && !pkgFromDump.isEmpty()) {
-                return pkgFromDump;
+        // Tier 3: UsageStatsManager Events (Iterate with reverse system-filter)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && hasUsageStatsPermission()) {
+            String usageGame = getActiveGameFromUsageEvents();
+            if (usageGame != null) {
+                return usageGame;
+            }
+
+            // Tier 4: UsageStats queryUsageStats fallback
+            String statsGame = getActiveGameFromUsageStats();
+            if (statsGame != null) {
+                return statsGame;
             }
         }
 
@@ -132,10 +161,215 @@ public class GameDetector {
     }
 
     /**
-     * Evaluates whether an application is registered as a game in Android.
+     * Scans SurfaceFlinger composition layers for active game surfaces (e.g. BGMI SurfaceView).
+     */
+    private String getActiveGameFromSurfaceFlinger() {
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "SurfaceFlinger", "--list"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String foundGame = null;
+
+            while ((line = reader.readLine()) != null) {
+                // Look for patterns:
+                // SurfaceView[com.pubg.imobile/com.epicgames.ue4.GameActivity]
+                // ActivityRecord{... com.pubg.imobile/...}
+                if (line.contains("SurfaceView[") || line.contains("ActivityRecord{") || line.contains("com.")) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
+                        foundGame = pkg;
+                        // SurfaceView indicates an active hardware rendered game layer
+                        if (line.contains("SurfaceView[")) {
+                            reader.close();
+                            return pkg;
+                        }
+                    }
+                }
+            }
+            reader.close();
+            if (foundGame != null) return foundGame;
+        } catch (Exception e) {
+            Log.d(TAG, "Error scanning SurfaceFlinger: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Scans activity stack for the top game activity.
+     */
+    private String getActiveGameFromActivityStack() {
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "activities"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            String topGame = null;
+
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("topResumedActivity=") || line.contains("ResumedActivity:") || line.contains("mFocusedApp=")) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !systemExclusions.contains(pkg)) {
+                        if (isGamePackage(pkg)) {
+                            reader.close();
+                            return pkg;
+                        }
+                    }
+                } else if (line.contains("ActivityRecord{") && topGame == null) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
+                        topGame = pkg;
+                    }
+                }
+            }
+            reader.close();
+            return topGame;
+        } catch (Exception e) {
+            Log.d(TAG, "Error scanning activity stack: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Inspects UsageEvents within recent minutes, filtering out system launchers & GameState Monitor.
+     */
+    private String getActiveGameFromUsageEvents() {
+        try {
+            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+            if (usm == null) return null;
+
+            long endTime = System.currentTimeMillis();
+            long startTime = endTime - (10 * 60 * 1000); // 10 minutes window
+
+            UsageEvents events = usm.queryEvents(startTime, endTime);
+            UsageEvents.Event event = new UsageEvents.Event();
+
+            String lastNonSystemApp = null;
+            String lastGame = null;
+
+            while (events.hasNextEvent()) {
+                events.getNextEvent(event);
+                if (event.getEventType() == UsageEvents.Event.ACTIVITY_RESUMED) {
+                    String pkg = event.getPackageName();
+                    if (pkg != null && !systemExclusions.contains(pkg)) {
+                        lastNonSystemApp = pkg;
+                        if (isGamePackage(pkg)) {
+                            lastGame = pkg;
+                        }
+                    }
+                }
+            }
+
+            if (lastGame != null) {
+                return lastGame;
+            }
+            if (lastNonSystemApp != null && isGamePackage(lastNonSystemApp)) {
+                return lastNonSystemApp;
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error querying UsageEvents: " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Inspects UsageStats for any game executed recently.
+     */
+    private String getActiveGameFromUsageStats() {
+        try {
+            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
+            if (usm == null) return null;
+
+            long endTime = System.currentTimeMillis();
+            long startTime = endTime - (15 * 60 * 1000); // 15 minutes window
+
+            List<UsageStats> statsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
+            if (statsList == null || statsList.isEmpty()) return null;
+
+            UsageStats mostRecentGame = null;
+
+            for (UsageStats stat : statsList) {
+                String pkg = stat.getPackageName();
+                if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
+                    if (mostRecentGame == null || stat.getLastTimeUsed() > mostRecentGame.getLastTimeUsed()) {
+                        mostRecentGame = stat;
+                    }
+                }
+            }
+
+            if (mostRecentGame != null && (endTime - mostRecentGame.getLastTimeUsed() < GAME_RECENCY_WINDOW_MS)) {
+                return mostRecentGame.getPackageName();
+            }
+        } catch (Exception e) {
+            Log.d(TAG, "Error querying UsageStats: " + e.getMessage());
+        }
+        return null;
+    }
+
+    private String extractPackageFromLine(String line) {
+        if (line == null) return null;
+        try {
+            // Check for format: SurfaceView[com.pubg.imobile/com.epicgames...
+            int svIndex = line.indexOf("SurfaceView[");
+            if (svIndex >= 0) {
+                int start = svIndex + "SurfaceView[".length();
+                int slash = line.indexOf('/', start);
+                if (slash > start) {
+                    return line.substring(start, slash).trim();
+                }
+            }
+
+            // Check for format: ... u0 com.example.game/com.example...
+            int slashIndex = line.indexOf('/');
+            if (slashIndex > 0) {
+                int spaceIndex = line.lastIndexOf(' ', slashIndex);
+                if (spaceIndex >= 0 && spaceIndex < slashIndex) {
+                    String candidate = line.substring(spaceIndex + 1, slashIndex).trim();
+                    if (!candidate.isEmpty() && !candidate.contains("}") && !candidate.contains("{")) {
+                        return candidate;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    /**
+     * Evaluates whether an application is registered or categorized as a game.
      */
     public boolean isGamePackage(String packageName) {
         if (packageName == null || packageName.isEmpty()) return false;
+
+        String lower = packageName.toLowerCase();
+
+        // 1. Explicit high-priority game package whitelist
+        if (lower.equals("com.pubg.imobile") || // BGMI (Battlegrounds Mobile India)
+            lower.equals("com.tencent.ig") ||    // PUBG Mobile Global
+            lower.equals("com.pubg.krmobile") ||  // PUBG Mobile Korea
+            lower.equals("com.vng.pubgmobile") || // PUBG Mobile Vietnam
+            lower.equals("com.rekoo.pubgm") ||    // PUBG Mobile Taiwan
+            lower.equals("com.pubg.newstate") ||  // New State Mobile
+            lower.contains("pubg") ||
+            lower.contains("freefire") ||
+            lower.contains("callofduty") ||
+            lower.contains("codm") ||
+            lower.contains("genshin") ||
+            lower.contains("fortnite") ||
+            lower.contains("minecraft") ||
+            lower.contains("roblox") ||
+            lower.contains("fifamobile") ||
+            lower.contains("wildrift") ||
+            lower.contains("brawlstars") ||
+            lower.contains("clashofclans") ||
+            lower.contains("clashroyale") ||
+            lower.contains("asphalt") ||
+            lower.contains(".game") ||
+            lower.contains(".games") ||
+            lower.contains("unity") ||
+            lower.contains("unreal")) {
+            return true;
+        }
+
+        // 2. PackageManager metadata check
         try {
             ApplicationInfo appInfo = packageManager.getApplicationInfo(packageName, 0);
 
@@ -150,19 +384,9 @@ public class GameDetector {
             if ((appInfo.flags & ApplicationInfo.FLAG_IS_GAME) != 0) {
                 return true;
             }
-
-            // Substring heuristic for common engine/game package signatures
-            String lower = packageName.toLowerCase();
-            if (lower.contains(".game") || lower.contains(".games") ||
-                lower.contains(".pubg") || lower.contains(".cod") ||
-                lower.contains(".genshin") || lower.contains(".fortnite") ||
-                lower.contains(".minecraft") || lower.contains(".roblox") ||
-                lower.contains(".unity") || lower.contains(".unreal")) {
-                return true;
-            }
-
         } catch (PackageManager.NameNotFoundException ignored) {
         }
+
         return false;
     }
 
@@ -170,6 +394,10 @@ public class GameDetector {
      * Resolves the human-friendly name of the app.
      */
     public String getAppLabel(String packageName) {
+        if (packageName == null) return "Unknown";
+        if (packageName.equals("com.pubg.imobile")) {
+            return "BGMI";
+        }
         try {
             ApplicationInfo appInfo = packageManager.getApplicationInfo(packageName, 0);
             CharSequence label = packageManager.getApplicationLabel(appInfo);
@@ -177,32 +405,5 @@ public class GameDetector {
         } catch (PackageManager.NameNotFoundException e) {
             return packageName;
         }
-    }
-
-    private String getForegroundPackageFromDumpsys() {
-        try {
-            Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "window"});
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("mCurrentFocus") || line.contains("mFocusedApp")) {
-                    // Example format: mCurrentFocus=Window{... u0 com.example.game/com.example.game.MainActivity}
-                    int slashIndex = line.indexOf('/');
-                    if (slashIndex > 0) {
-                        int spaceIndex = line.lastIndexOf(' ', slashIndex);
-                        if (spaceIndex >= 0 && spaceIndex < slashIndex) {
-                            String pkg = line.substring(spaceIndex + 1, slashIndex).trim();
-                            if (!pkg.isEmpty() && !pkg.contains("}")) {
-                                reader.close();
-                                return pkg;
-                            }
-                        }
-                    }
-                }
-            }
-            reader.close();
-        } catch (Exception ignored) {
-        }
-        return null;
     }
 }

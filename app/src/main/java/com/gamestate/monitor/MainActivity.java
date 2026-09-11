@@ -616,7 +616,19 @@ public class MainActivity extends AppCompatActivity {
         if (headerFps == null || fpsBackendManager == null) return;
 
         GameStateInfo gameState = GameStateService.getCurrentGameState();
+        if ((gameState == null || !gameState.hasGame()) && gameDetector != null) {
+            gameState = gameDetector.detectForegroundGame();
+        }
+
         FpsMonitorState monitorState = GameStateService.getCurrentMonitorState();
+        if (gameState != null && gameState.hasGame()) {
+            if (fpsBackendManager.isSupportedBackendAvailable()) {
+                monitorState = FpsMonitorState.FPS_MONITORING_ACTIVE;
+            } else {
+                monitorState = FpsMonitorState.WAITING_FOR_BACKEND;
+            }
+        }
+
         FpsMetrics metrics = GameStateService.getCurrentMetrics();
         FpsBackend activeBackend = fpsBackendManager.getActiveBackend();
         AvailabilityStatus availabilityStatus = fpsBackendManager.getPrimaryAvailabilityStatus();
