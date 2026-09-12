@@ -112,8 +112,9 @@ public class GameDetector {
         }
 
         // 3. Priority 2: Check if a game is active in the TASK MANAGER (running in background)
-        boolean hasDump = context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
-        if (hasDump) {
+        boolean hasPrivilege = (context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED)
+                || com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted();
+        if (hasPrivilege) {
             String taskManagerGame = getActiveGameFromTaskManager();
             if (taskManagerGame != null && !taskManagerGame.isEmpty()) {
                 String appName = getAppLabel(taskManagerGame);
@@ -148,7 +149,7 @@ public class GameDetector {
      */
     private String getActiveGameFromTaskManager() {
         try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "recents"});
+            java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "activity", "recents"});
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
 
@@ -188,7 +189,7 @@ public class GameDetector {
     private String getAuthoritativeForegroundPackage() {
         // 1. Check dumpsys activity activities (topResumedActivity is at the very top)
         try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "activities"});
+            java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "activity", "activities"});
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             int linesRead = 0;
@@ -209,7 +210,7 @@ public class GameDetector {
 
         // 2. Fallback: Check dumpsys window displays (mCurrentFocus / mFocusedApp)
         try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "window", "displays"});
+            java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "window", "displays"});
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -235,10 +236,11 @@ public class GameDetector {
     public boolean isPackageProcessAlive(String packageName) {
         if (packageName == null || packageName.isEmpty()) return false;
 
-        // 1. With DUMP permission: check dumpsys activity processes for live *APP* record
-        if (context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED) {
+        // 1. With DUMP permission or Shizuku: check dumpsys activity processes for live *APP* record
+        if (context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED
+                || com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted()) {
             try {
-                java.lang.Process process = Runtime.getRuntime().exec(
+                java.lang.Process process = ShellExecutor.exec(
                         new String[]{"dumpsys", "activity", "p", packageName}
                 );
                 BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));

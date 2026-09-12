@@ -48,6 +48,9 @@ import com.gamestate.monitor.util.DeviceStatsManager;
 import com.gamestate.monitor.util.FormatUtils;
 import com.gamestate.monitor.util.GpuMonitor;
 import com.google.android.material.button.MaterialButton;
+import rikka.shizuku.Shizuku;
+import com.gamestate.monitor.shizuku.ShizukuManager;
+import android.util.Log;
 
 /**
  * MainActivity
@@ -170,6 +173,51 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // Shizuku listeners for wireless on-device ADB IPC
+    private final Shizuku.OnBinderReceivedListener shizukuBinderReceivedListener = () -> {
+        runOnUiThread(() -> {
+            Log.i("MainActivity", "Shizuku binder received");
+            updateFpsCardMetrics();
+        });
+    };
+
+    private final Shizuku.OnBinderDeadListener shizukuBinderDeadListener = () -> {
+        runOnUiThread(() -> {
+            Log.i("MainActivity", "Shizuku binder dead");
+            updateFpsCardMetrics();
+        });
+    };
+
+    private final Shizuku.OnRequestPermissionResultListener shizukuPermissionResultListener = (requestCode, grantResult) -> {
+        if (requestCode == ShizukuManager.SHIZUKU_REQUEST_CODE) {
+            runOnUiThread(() -> {
+                if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(MainActivity.this, "Shizuku authorized! Granting system permissions...", Toast.LENGTH_SHORT).show();
+                    ShizukuManager.grantAppPrivileges(MainActivity.this, new ShizukuManager.PermissionGrantCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Toast.makeText(MainActivity.this, "FPS & Game Detection active via Shizuku!", Toast.LENGTH_SHORT).show();
+                            Intent gameServiceIntent = new Intent(MainActivity.this, GameStateService.class);
+                            try {
+                                startService(gameServiceIntent);
+                            } catch (Exception ignored) {}
+                            updateFpsCardMetrics();
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Toast.makeText(MainActivity.this, "Permission grant failed: " + error, Toast.LENGTH_LONG).show();
+                            updateFpsCardMetrics();
+                        }
+                    });
+                } else {
+                    Toast.makeText(MainActivity.this, "Shizuku permission denied.", Toast.LENGTH_SHORT).show();
+                    updateFpsCardMetrics();
+                }
+            });
+        }
+    };
+
     // Permission result launcher for Android 13+ POST_NOTIFICATIONS
     private final ActivityResultLauncher<String> requestNotificationPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -232,6 +280,15 @@ public class MainActivity extends AppCompatActivity {
 
         // 7. Request notification permission on Android 13+
         checkNotificationPermission();
+
+        // 8. Register Shizuku listeners
+        try {
+            Shizuku.addBinderReceivedListener(shizukuBinderReceivedListener);
+            Shizuku.addBinderDeadListener(shizukuBinderDeadListener);
+            Shizuku.addRequestPermissionResultListener(shizukuPermissionResultListener);
+        } catch (Throwable t) {
+            Log.w("MainActivity", "Shizuku initialization error: " + t.getMessage());
+        }
     }
 
     @Override
@@ -277,6 +334,17 @@ public class MainActivity extends AppCompatActivity {
         try {
             unregisterReceiver(gameStateReceiver);
         } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            Shizuku.removeBinderReceivedListener(shizukuBinderReceivedListener);
+            Shizuku.removeBinderDeadListener(shizukuBinderDeadListener);
+            Shizuku.removeRequestPermissionResultListener(shizukuPermissionResultListener);
+        } catch (Throwable ignored) {
         }
     }
 
@@ -754,40 +822,96 @@ public class MainActivity extends AppCompatActivity {
         }
 
         // 7. Update Action Button
-        if (gameDetector != null && !gameDetector.hasUsageStatsPermission()) {
+        boolean isDumpGranted = checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
+        boolean isShizukuGranted = ShizukuManager.isPermissionGranted();
+        boolean isShizukuRunning = ShizukuManager.isShizukuRunning();
+
+        if (gameDetector != null && !gameDetector.hasUsageStatsPermission() && !isShizukuGranted) {
             btnFpsAction.setText("Enable Game Detection (Usage Access)");
             btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
             btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
-        } else if (checkSelfPermission("android.permission.DUMP") != PackageManager.PERMISSION_GRANTED) {
-            btnFpsAction.setText("Copy ADB Unlock Command");
+        } else if (isShizukuGranted || isDumpGranted) {
+            String activeLabel = isShizukuGranted ? "FPS Monitoring Ready (Shizuku Active)" : "FPS Monitoring Ready (ADB Hook Active)";
+            btnFpsAction.setText(activeLabel);
+            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_green_health)));
+            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_green_health));
+        } else if (isShizukuRunning) {
+            btnFpsAction.setText("Authorize via Shizuku (Wireless)");
             btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
             btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
         } else {
-            btnFpsAction.setText("FPS Monitoring Ready (ADB Hook Active)");
-            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_green_health)));
-            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_green_health));
+            btnFpsAction.setText("Unlock FPS (Shizuku / ADB)");
+            btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
+            btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
         }
     }
 
     private void handleFpsActionClick() {
-        if (gameDetector != null && !gameDetector.hasUsageStatsPermission()) {
+        boolean isDumpGranted = checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
+        boolean isShizukuGranted = ShizukuManager.isPermissionGranted();
+        boolean isShizukuRunning = ShizukuManager.isShizukuRunning();
+
+        if (isShizukuGranted || isDumpGranted) {
+            Toast.makeText(this, "FPS monitoring backend is authorized and active.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (gameDetector != null && !gameDetector.hasUsageStatsPermission() && !isShizukuRunning) {
             new AlertDialog.Builder(this)
                     .setTitle("Usage Access Required")
-                    .setMessage("To detect foreground games automatically, please enable Usage Access for GameState Monitor in the following settings screen.")
+                    .setMessage("To detect foreground games automatically, please enable Usage Access for GameState Monitor in settings.")
                     .setPositiveButton("Open Settings", (dialog, which) -> {
                         startActivity(gameDetector.getUsageAccessSettingsIntent());
                     })
                     .setNegativeButton("Cancel", null)
                     .show();
-        } else if (checkSelfPermission("android.permission.DUMP") != PackageManager.PERMISSION_GRANTED) {
-            ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-            ClipData clip = ClipData.newPlainText("ADB Command", "adb shell pm grant " + getPackageName() + " android.permission.DUMP");
-            if (clipboard != null) {
-                clipboard.setPrimaryClip(clip);
-                Toast.makeText(this, "ADB command copied! Run via terminal to grant DUMP.", Toast.LENGTH_LONG).show();
-            }
+            return;
+        }
+
+        if (isShizukuRunning) {
+            // Shizuku service is running on device! Request permission directly.
+            ShizukuManager.requestPermission(this, ShizukuManager.SHIZUKU_REQUEST_CODE);
+            return;
+        }
+
+        // Neither Shizuku running nor ADB DUMP granted -> show interactive options dialog
+        CharSequence[] options;
+        if (ShizukuManager.isShizukuInstalled(this)) {
+            options = new CharSequence[]{
+                    "Start Shizuku (Wireless Debugging - No PC)",
+                    "Copy ADB Unlock Command (PC)"
+            };
         } else {
-            Toast.makeText(this, "FPS monitoring backend is authorized and active.", Toast.LENGTH_SHORT).show();
+            options = new CharSequence[]{
+                    "Install Shizuku (Recommended - No PC needed)",
+                    "Copy ADB Unlock Command (PC)"
+            };
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle("Unlock Real FPS Monitoring")
+                .setMessage("Android restricts reading other apps' frame buffers by default. Choose how you want to unlock it:")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        try {
+                            startActivity(ShizukuManager.getOpenShizukuIntent(this));
+                        } catch (Exception e) {
+                            Toast.makeText(this, "Could not open Shizuku: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    } else if (which == 1) {
+                        copyAdbCommandToClipboard();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void copyAdbCommandToClipboard() {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("ADB Command", "adb shell pm grant " + getPackageName() + " android.permission.DUMP");
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(clip);
+            Toast.makeText(this, "ADB command copied! Run via terminal to grant DUMP.", Toast.LENGTH_LONG).show();
         }
     }
 }

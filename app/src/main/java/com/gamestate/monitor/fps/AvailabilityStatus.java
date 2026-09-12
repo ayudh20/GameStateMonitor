@@ -8,6 +8,7 @@ package com.gamestate.monitor.fps;
  */
 public enum AvailabilityStatus {
     AVAILABLE("Ready"),
+    REQUIRES_SHIZUKU_PERMISSION("Requires Shizuku authorization"),
     REQUIRES_ADB_PERMISSION("Requires ADB DUMP permission"),
     REQUIRES_ROOT("Root access not detected"),
     UNSUPPORTED("Waiting for supported FPS backend");

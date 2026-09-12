@@ -69,23 +69,33 @@ public class SurfaceFlingerFpsBackend implements FpsBackend {
 
     @Override
     public FpsBackendType getType() {
+        if (com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted()) {
+            return FpsBackendType.SHIZUKU;
+        }
         return FpsBackendType.SURFACE_FLINGER_ADB;
     }
 
     @Override
     public String getName() {
+        if (com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted()) {
+            return FpsBackendType.SHIZUKU.getDisplayName();
+        }
         return FpsBackendType.SURFACE_FLINGER_ADB.getDisplayName();
     }
 
     @Override
     public boolean isAvailable(Context context) {
-        return context.checkSelfPermission(DUMP_PERMISSION) == PackageManager.PERMISSION_GRANTED;
+        return com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted()
+                || context.checkSelfPermission(DUMP_PERMISSION) == PackageManager.PERMISSION_GRANTED;
     }
 
     @Override
     public AvailabilityStatus getAvailabilityStatus(Context context) {
         if (isAvailable(context)) {
             return AvailabilityStatus.AVAILABLE;
+        }
+        if (com.gamestate.monitor.shizuku.ShizukuManager.isShizukuRunning()) {
+            return AvailabilityStatus.REQUIRES_SHIZUKU_PERMISSION;
         }
         return AvailabilityStatus.REQUIRES_ADB_PERMISSION;
     }
@@ -97,9 +107,9 @@ public class SurfaceFlingerFpsBackend implements FpsBackend {
         this.isMonitoring = true;
 
         if (!isAvailable(context)) {
-            Log.w(TAG, "Cannot start SurfaceFlinger monitoring: android.permission.DUMP not granted.");
+            Log.w(TAG, "Cannot start SurfaceFlinger monitoring: neither Shizuku nor ADB DUMP granted.");
             if (callback != null) {
-                callback.onError("Requires ADB DUMP permission");
+                callback.onError(getAvailabilityStatus(context).getDescription());
             }
             return;
         }
@@ -223,7 +233,7 @@ public class SurfaceFlingerFpsBackend implements FpsBackend {
         }
 
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{
+            Process process = ShellExecutor.exec(new String[]{
                     "dumpsys", "SurfaceFlinger", "--latency", cachedLayerName
             });
 
@@ -387,7 +397,7 @@ public class SurfaceFlingerFpsBackend implements FpsBackend {
     private FpsMetrics sampleGraphicsStats() {
         if (targetPackage == null) return null;
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{
+            Process process = ShellExecutor.exec(new String[]{
                     "dumpsys", "graphicsstats"
             });
 
@@ -502,7 +512,7 @@ public class SurfaceFlingerFpsBackend implements FpsBackend {
     private String findTargetLayer(String targetPkg) {
         if (targetPkg == null || targetPkg.isEmpty()) return null;
         try {
-            Process process = Runtime.getRuntime().exec(new String[]{
+            Process process = ShellExecutor.exec(new String[]{
                     "dumpsys", "SurfaceFlinger", "--list"
             });
 

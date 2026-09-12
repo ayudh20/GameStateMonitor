@@ -6,6 +6,7 @@ package com.gamestate.monitor.fps;
  * Identifies the mechanism or authority providing real frame pacing / FPS data.
  */
 public enum FpsBackendType {
+    SHIZUKU("Shizuku (Wireless ADB)"),
     SURFACE_FLINGER_ADB("SurfaceFlinger (ADB)"),
     ROOT("Root Shell (su)"),
     FALLBACK("Fallback"),

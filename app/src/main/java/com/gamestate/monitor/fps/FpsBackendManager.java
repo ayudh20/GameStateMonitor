@@ -66,8 +66,7 @@ public class FpsBackendManager {
         if (surfaceFlingerBackend.isAvailable(context)) {
             return AvailabilityStatus.AVAILABLE;
         }
-        // If neither is available, prioritize explaining ADB requirement
-        return AvailabilityStatus.REQUIRES_ADB_PERMISSION;
+        return surfaceFlingerBackend.getAvailabilityStatus(context);
     }
 
     public RootFpsBackend getRootBackend() {
