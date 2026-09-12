@@ -16,6 +16,7 @@ import com.gamestate.monitor.fps.FpsMetrics;
 import com.gamestate.monitor.fps.FpsMonitorState;
 import com.gamestate.monitor.fps.GameDetector;
 import com.gamestate.monitor.fps.GameStateInfo;
+import com.gamestate.monitor.fps.RootUtils;
 
 /**
  * GameStateService
@@ -70,6 +71,7 @@ public class GameStateService extends Service implements FpsDataCallback {
     public void onCreate() {
         super.onCreate();
         isServiceRunning = true;
+        RootUtils.grantPrivilegesViaRoot(this);
         gameDetector = new GameDetector(this);
         backendManager = new FpsBackendManager(this, 60.0f);
         activeBackend = backendManager.getActiveBackend();

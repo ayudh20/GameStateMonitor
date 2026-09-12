@@ -35,6 +35,7 @@ import com.gamestate.monitor.fps.FpsMetrics;
 import com.gamestate.monitor.fps.FpsMonitorState;
 import com.gamestate.monitor.fps.GameDetector;
 import com.gamestate.monitor.fps.GameStateInfo;
+import com.gamestate.monitor.fps.RootUtils;
 import com.gamestate.monitor.model.CpuInfo;
 import com.gamestate.monitor.model.DeviceInfo;
 import com.gamestate.monitor.model.GpuInfo;
@@ -242,6 +243,9 @@ public class MainActivity extends AppCompatActivity {
         cachedGpuInfo = gpuMonitor.getGpuInfo();
         fpsBackendManager = new FpsBackendManager(this, statsManager.getScreenRefreshRate());
         gameDetector = new GameDetector(this);
+
+        // Auto-grant permissions via root if rooted (Poco F1)
+        RootUtils.grantPrivilegesViaRoot(this);
 
         // Start GameStateService to monitor foreground game states
         Intent gameServiceIntent = new Intent(this, GameStateService.class);
@@ -824,14 +828,22 @@ public class MainActivity extends AppCompatActivity {
         // 7. Update Action Button
         boolean isDumpGranted = checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
         boolean isShizukuGranted = ShizukuManager.isPermissionGranted();
+        boolean isRootGranted = RootUtils.isRootAvailable();
         boolean isShizukuRunning = ShizukuManager.isShizukuRunning();
 
-        if (gameDetector != null && !gameDetector.hasUsageStatsPermission() && !isShizukuGranted) {
+        if (gameDetector != null && !gameDetector.hasUsageStatsPermission() && !isShizukuGranted && !isRootGranted) {
             btnFpsAction.setText("Enable Game Detection (Usage Access)");
             btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_cyan)));
             btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
-        } else if (isShizukuGranted || isDumpGranted) {
-            String activeLabel = isShizukuGranted ? "FPS Monitoring Ready (Shizuku Active)" : "FPS Monitoring Ready (ADB Hook Active)";
+        } else if (isRootGranted || isShizukuGranted || isDumpGranted) {
+            String activeLabel;
+            if (isRootGranted) {
+                activeLabel = "FPS Monitoring Ready (Root Active)";
+            } else if (isShizukuGranted) {
+                activeLabel = "FPS Monitoring Ready (Shizuku Active)";
+            } else {
+                activeLabel = "FPS Monitoring Ready (ADB Hook Active)";
+            }
             btnFpsAction.setText(activeLabel);
             btnFpsAction.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.figma_green_health)));
             btnFpsAction.setTextColor(ContextCompat.getColor(this, R.color.figma_green_health));
@@ -849,9 +861,10 @@ public class MainActivity extends AppCompatActivity {
     private void handleFpsActionClick() {
         boolean isDumpGranted = checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
         boolean isShizukuGranted = ShizukuManager.isPermissionGranted();
+        boolean isRootGranted = RootUtils.isRootAvailable();
         boolean isShizukuRunning = ShizukuManager.isShizukuRunning();
 
-        if (isShizukuGranted || isDumpGranted) {
+        if (isRootGranted || isShizukuGranted || isDumpGranted) {
             Toast.makeText(this, "FPS monitoring backend is authorized and active.", Toast.LENGTH_SHORT).show();
             return;
         }
