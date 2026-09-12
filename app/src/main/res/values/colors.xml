@@ -50,4 +50,13 @@
     <!-- System Palette Overrides for Dark Material Theme -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Gaming Bottom Dock Colors -->
+    <color name="dock_bg">#E60D0D14</color>
+    <color name="dock_border">#3300D2E0</color>
+    <color name="dock_center_start">#00A3B4</color>
+    <color name="dock_center_end">#00E5FF</color>
+    <color name="dock_center_stroke">#8000E5FF</color>
+    <color name="dock_halo">#2000E5FF</color>
+    <color name="dock_active_glow">#4000D2E0</color>
 </resources>

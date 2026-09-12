@@ -58,6 +58,18 @@ public final class FormatUtils {
         return roundedRate + " Hz";
     }
 
+    public static String formatDuration(long millis) {
+        long elapsedSec = millis / 1000;
+        long h = elapsedSec / 3600;
+        long m = (elapsedSec % 3600) / 60;
+        long s = elapsedSec % 60;
+        if (h > 0) {
+            return String.format(Locale.getDefault(), "%02dh %02dm %02ds", h, m, s);
+        } else {
+            return String.format(Locale.getDefault(), "%02dm %02ds", m, s);
+        }
+    }
+
     /**
      * Returns the current date and time formatted for dashboard display.
      * Example: "Sep 09, 2026 - 14:32:05"

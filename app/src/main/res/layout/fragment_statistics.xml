@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollStatistics"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/figma_bg_dark"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="96dp">
+
+        <!-- Title Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Gaming Statistics"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:letterSpacing="0.06"
+            android:text="SESSION BENCHMARKS &amp; STABILITY PROFILING"
+            android:textColor="@color/figma_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- ACTIVE SESSION SUMMARY CARD -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerGameSession"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndBadgeBackground="@drawable/bg_status_badge"
+                    app:headerEndText="STANDBY"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_trending_up"
+                    app:headerTitle="Active Game Session" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsGameName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="Monitored Game"
+                        app:rowValue="None (Monitoring)"
+                        app:rowValueColor="@color/white" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsDuration"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Session Duration"
+                        app:rowValue="00m 00s"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsTargetHz"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Target Refresh Rate"
+                        app:rowValue="60 Hz" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- FPS & STABILITY BENCHMARK CARD -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_pulse"
+                    app:headerTitle="FPS &amp; Stability Metrics" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsAvgFps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="Average FPS"
+                        app:rowValue="-- FPS"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsOneLow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="1% Low FPS"
+                        app:rowValue="-- FPS" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsPointOneLow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="0.1% Low FPS"
+                        app:rowValue="-- FPS" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsStability"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="FPS Stability Score"
+                        app:rowValue="100%"
+                        app:rowValueColor="@color/status_optimal" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowStatsDroppedFrames"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Dropped / Stutter Frames"
+                        app:rowValue="0" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- FRAME TIME DISTRIBUTION -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_device"
+                    app:headerTitle="Frame Time Distribution" />
+
+                <!-- Segmented visual bar -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="8dp"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/progress_bar_figma"
+                    android:orientation="horizontal"
+                    android:weightSum="100">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="95"
+                        android:background="@color/status_optimal" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="4"
+                        android:background="@color/status_moderate" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:background="@color/status_high_load" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="&lt; 16.6ms (Smooth): 95%"
+                        android:textColor="@color/status_optimal"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="&gt; 33.3ms (Jank): 1%"
+                        android:textColor="@color/status_high_load"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Action: Reset Benchmark Session -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnResetBenchmark"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="16dp"
+            android:text="Reset Session Benchmark"
+            android:textColor="@color/figma_cyan"
+            android:textSize="13sp"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/figma_cyan" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

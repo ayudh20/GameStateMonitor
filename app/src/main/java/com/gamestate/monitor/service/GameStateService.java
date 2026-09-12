@@ -44,6 +44,7 @@ public class GameStateService extends Service implements FpsDataCallback {
     private static volatile GameStateInfo currentGameState = GameStateInfo.none();
     private static volatile FpsMonitorState currentMonitorState = FpsMonitorState.NO_GAME_DETECTED;
     private static volatile FpsMetrics currentMetrics = FpsMetrics.empty(60.0f);
+    private static volatile FpsBackend currentActiveBackend = null;
     private static volatile boolean isServiceRunning = false;
 
     private final IBinder binder = new LocalBinder();
@@ -73,8 +74,9 @@ public class GameStateService extends Service implements FpsDataCallback {
         gameDetector = new GameDetector(this);
         backendManager = new FpsBackendManager(this, 60.0f);
         activeBackend = backendManager.getActiveBackend();
+        currentActiveBackend = activeBackend;
 
-        Log.i(TAG, "GameStateService created. Active FPS backend: " + activeBackend.getName());
+        // Start scanning cycle
         loopHandler.post(scanRunnable);
     }
 
@@ -103,6 +105,7 @@ public class GameStateService extends Service implements FpsDataCallback {
 
         // 2. Resolve best available backend
         activeBackend = backendManager.getActiveBackend();
+        currentActiveBackend = activeBackend;
 
         // 3. Determine high-level monitoring state
         FpsMonitorState newState;
@@ -186,6 +189,10 @@ public class GameStateService extends Service implements FpsDataCallback {
 
     public static FpsMetrics getCurrentMetrics() {
         return currentMetrics;
+    }
+
+    public static FpsBackend getActiveBackend() {
+        return currentActiveBackend;
     }
 
     public GameDetector getGameDetector() {

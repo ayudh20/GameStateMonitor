@@ -76,6 +76,18 @@ public class ShizukuManager {
         }
     }
 
+    public static boolean isShizukuAvailable() {
+        return isShizukuRunning();
+    }
+
+    public static boolean hasShizukuPermission() {
+        return isPermissionGranted();
+    }
+
+    public static void requestPermission(Activity activity) {
+        requestPermission(activity, SHIZUKU_REQUEST_CODE);
+    }
+
     /**
      * Requests authorization from Shizuku.
      */

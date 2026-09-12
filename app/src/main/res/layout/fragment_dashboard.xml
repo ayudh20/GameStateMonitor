@@ -1,0 +1,571 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollDashboard"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/figma_bg_dark"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="96dp">
+
+        <!-- ============================================================ -->
+        <!-- HEADER SECTION: App Title with Glowing Dot & Subtitle         -->
+        <!-- ============================================================ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvAppTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="GameState Monitor"
+                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/vHeaderStatusDot"
+                android:layout_width="8dp"
+                android:layout_height="8dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_dot_cyan" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvAppSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:letterSpacing="0.06"
+            android:text="REAL-TIME PERFORMANCE DASHBOARD"
+            android:textColor="@color/figma_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- ============================================================ -->
+        <!-- CARD 1: DEVICE INFORMATION                                   -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerDeviceInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_device"
+                    app:headerTitle="Device Information" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceModel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="Model Name"
+                        app:rowValue="POCO F1" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceAndroidVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Android Version"
+                        app:rowValue="Android 13" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDeviceKernelVersion"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Kernel Version"
+                        app:rowValue="Linux 4.9" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowActiveDiagnosticRun"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Active Diagnostic Run"
+                        app:rowValue="00h 00m 00s"
+                        app:rowValueColor="@color/figma_cyan" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 2: CPU PROCESSOR                                         -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerCpu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="42% LOAD"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_pulse"
+                    app:headerTitle="CPU Processor" />
+
+                <ProgressBar
+                    android:id="@+id/pbCpuLoad"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="42"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvCpuName"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="Snapdragon 845" />
+
+                    <TextView
+                        android:id="@+id/tvCpuCoresActive"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="8 Cores Active" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 3: GPU GRAPHICS                                          -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerGpu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="0% UTIL"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_gpu"
+                    app:headerTitle="GPU Graphics" />
+
+                <ProgressBar
+                    android:id="@+id/pbGpuUtil"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvGpuRenderer"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="Adreno 630" />
+
+                    <TextView
+                        android:id="@+id/tvGpuFrequency"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="710 MHz" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Display Refresh Rate"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="11sp" />
+
+                    <TextView
+                        android:id="@+id/tvDisplayRefreshRate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        tools:text="60 Hz" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 4: FPS & GAME PERFORMANCE                                -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerFps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndBadgeBackground="@drawable/bg_status_badge"
+                    app:headerEndText="STANDBY"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_trending_up"
+                    app:headerTitle="FPS Performance" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowFpsStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="FPS Status"
+                        app:rowValue="No Game Active" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowFpsSource"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="FPS Source"
+                        app:rowValue="SurfaceFlinger (Shizuku)" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowFpsAvailability"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Backend Status"
+                        app:rowValue="Active"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowActiveGame"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Active Game"
+                        app:rowValue="None (Monitoring)"
+                        app:rowValueColor="@color/white" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowCurrentFps"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Real-time FPS"
+                        app:rowValue="-- FPS"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowTargetRefreshRate"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Target Refresh Rate"
+                        app:rowValue="60 Hz" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowFrameTime"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Avg Frame Time"
+                        app:rowValue="-- ms" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowOnePercentLow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="1% Low FPS"
+                        app:rowValue="-- FPS" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDroppedFrames"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Dropped Frames"
+                        app:rowValue="0" />
+                </LinearLayout>
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnFpsAction"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:layout_marginTop="12dp"
+                    android:text="Check Shizuku / Permission"
+                    android:textColor="@color/figma_cyan"
+                    android:textSize="12sp"
+                    android:visibility="gone"
+                    app:cornerRadius="10dp"
+                    app:strokeColor="@color/figma_cyan" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 5: RAM MEMORY                                            -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerRam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="64% LOAD"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_ram"
+                    app:headerTitle="RAM Memory" />
+
+                <ProgressBar
+                    android:id="@+id/pbRamUsage"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="6dp"
+                    android:layout_marginTop="12dp"
+                    android:max="100"
+                    android:progress="64"
+                    android:progressDrawable="@drawable/progress_bar_figma" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/tvRamUsageValues"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="3.8 GB / 5.7 GB" />
+
+                    <TextView
+                        android:id="@+id/tvRamAvailable"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        tools:text="1.9 GB Free" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- CARD 6: BATTERY HEALTH & THERMALS                             -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            android:stateListAnimator="@animator/card_press_animator">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerBattery"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="GOOD"
+                    app:headerEndTextColor="@color/status_optimal"
+                    app:headerIcon="@drawable/ic_battery"
+                    app:headerTitle="Battery &amp; Thermals" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryLevel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="Battery Level"
+                        app:rowValue="82% (Discharging)" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryTemp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Battery Temp"
+                        app:rowValue="31.2°C"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowCpuTemp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="CPU Temp"
+                        app:rowValue="38.5°C" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowThermalStatus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Thermal Throttling"
+                        app:rowValue="None (Optimal)"
+                        app:rowValueColor="@color/status_optimal" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowBatteryVoltage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Battery Voltage"
+                        app:rowValue="4.12 V" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Refresh Button & Timestamp Notice -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnRefresh"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:text="Refresh Diagnostics"
+            android:textColor="@color/black"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            app:backgroundTint="@color/figma_cyan"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_refresh"
+            app:iconGravity="textStart"
+            app:iconTint="@color/black" />
+
+        <TextView
+            android:id="@+id/tvAutoRefreshNotice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text="Auto-refreshes every 2 seconds"
+            android:textColor="@color/figma_text_muted"
+            android:textSize="11sp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

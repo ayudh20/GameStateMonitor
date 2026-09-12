@@ -101,6 +101,9 @@ public class OverlayService extends Service {
     private GpuMonitor gpuMonitor;
     private GpuInfo cachedGpuInfo;
 
+    // Overlay Preferences
+    private com.gamestate.monitor.model.OverlayPreferences prefs;
+
     // Performance Stats Manager & Timer
     private DeviceStatsManager statsManager;
     private DeviceInfo cachedDeviceInfo;
@@ -115,6 +118,15 @@ public class OverlayService extends Service {
         }
     };
 
+    private final BroadcastReceiver configReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (com.gamestate.monitor.model.OverlayPreferences.ACTION_OVERLAY_CONFIG_CHANGED.equals(intent.getAction())) {
+                applyPreferencesStyling();
+            }
+        }
+    };
+
     @Override
     public IBinder onBind(Intent intent) {
         // We do not bind to this service; it runs independently via startForegroundService
@@ -126,6 +138,7 @@ public class OverlayService extends Service {
         super.onCreate();
         isRunning = true;
         sendOverlayStateBroadcast(true);
+        prefs = new com.gamestate.monitor.model.OverlayPreferences(this);
         statsManager = new DeviceStatsManager(this);
         cachedDeviceInfo = statsManager.getDeviceInfo();
         cpuMonitor = new CpuMonitor();
@@ -138,27 +151,34 @@ public class OverlayService extends Service {
         // 2. Inflate and configure the floating Window
         createFloatingHudWindow();
 
-        // 3. Start real-time monitoring loop
+        // 3. Apply custom user styling
+        applyPreferencesStyling();
+
+        // 4. Start real-time monitoring loop
         updateHandler.post(updateRunnable);
 
-        // 4. Register for instant game state and FPS updates
+        // 5. Register for instant game state and config updates
         try {
-            IntentFilter filter = new IntentFilter(GameStateService.ACTION_GAME_STATE_UPDATED);
+            IntentFilter filter = new IntentFilter();
+            filter.addAction(GameStateService.ACTION_GAME_STATE_UPDATED);
+            filter.addAction(com.gamestate.monitor.model.OverlayPreferences.ACTION_OVERLAY_CONFIG_CHANGED);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                registerReceiver(gameStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+                registerReceiver(stateAndConfigReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             } else {
-                registerReceiver(gameStateReceiver, filter);
+                registerReceiver(stateAndConfigReceiver, filter);
             }
         } catch (Exception e) {
-            Log.w(TAG, "Error registering gameStateReceiver: " + e.getMessage());
+            Log.w(TAG, "Error registering receivers: " + e.getMessage());
         }
     }
 
-    private final BroadcastReceiver gameStateReceiver = new BroadcastReceiver() {
+    private final BroadcastReceiver stateAndConfigReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (GameStateService.ACTION_GAME_STATE_UPDATED.equals(intent.getAction())) {
                 updateHudMetrics();
+            } else if (com.gamestate.monitor.model.OverlayPreferences.ACTION_OVERLAY_CONFIG_CHANGED.equals(intent.getAction())) {
+                applyPreferencesStyling();
             }
         }
     };
@@ -436,30 +456,74 @@ public class OverlayService extends Service {
          }
      }
 
-     @Override
-     public void onDestroy() {
-         super.onDestroy();
-         isRunning = false;
-         sendOverlayStateBroadcast(false);
+    private void applyPreferencesStyling() {
+        if (overlayPillView == null || prefs == null) return;
 
-          // Stop updates
-          updateHandler.removeCallbacks(updateRunnable);
+        float opacity = prefs.getOpacity();
+        overlayPillView.setAlpha(opacity);
 
-          // Unregister game state receiver
-          try {
-              unregisterReceiver(gameStateReceiver);
-          } catch (Exception ignored) {
-          }
+        int textSize = prefs.getTextSizeSp();
+        if (tvOverlayCpu != null) tvOverlayCpu.setTextSize(textSize);
+        if (tvOverlayGpu != null) tvOverlayGpu.setTextSize(textSize);
+        if (tvOverlayRam != null) tvOverlayRam.setTextSize(textSize);
+        if (tvOverlayTemp != null) tvOverlayTemp.setTextSize(textSize);
 
-          // Remove floating view from screen
-         if (overlayView != null && windowManager != null) {
-             try {
-                 windowManager.removeView(overlayView);
-             } catch (Exception e) {
-                 Log.e(TAG, "Error removing overlay: " + e.getMessage());
-             }
+        try {
+            int accentColor = android.graphics.Color.parseColor(prefs.getAccentColorHex());
+            if (tvOverlayCpu != null) tvOverlayCpu.setTextColor(accentColor);
+
+            android.graphics.drawable.GradientDrawable shape = new android.graphics.drawable.GradientDrawable();
+            shape.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+            float density = getResources().getDisplayMetrics().density;
+            shape.setCornerRadius(prefs.getCornerRadiusDp() * density);
+            shape.setColor(android.graphics.Color.argb((int) (opacity * 240), 13, 13, 20));
+            shape.setStroke(Math.round(1.5f * density), accentColor);
+            overlayPillView.setBackground(shape);
+        } catch (Exception ignored) {}
+
+        // Visibility
+        if (tvOverlayCpu != null) tvOverlayCpu.setVisibility(prefs.isShowCpu() ? View.VISIBLE : View.GONE);
+        if (tvOverlayGpu != null) tvOverlayGpu.setVisibility((prefs.isShowGpu() || prefs.isShowFps()) ? View.VISIBLE : View.GONE);
+        if (tvOverlayRam != null) tvOverlayRam.setVisibility(prefs.isShowRam() ? View.VISIBLE : View.GONE);
+        if (tvOverlayTemp != null) tvOverlayTemp.setVisibility(prefs.isShowBatteryTemp() ? View.VISIBLE : View.GONE);
+
+        // Position Snapping
+        if (prefs.getPositionMode() == com.gamestate.monitor.model.OverlayPreferences.PositionMode.TOP_RIGHT) {
+            params.gravity = Gravity.TOP | Gravity.END;
+            params.x = 30;
+            params.y = 120;
+            if (windowManager != null && overlayView != null) {
+                try {
+                    windowManager.updateViewLayout(overlayView, params);
+                } catch (Exception ignored) {}
+            }
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        isRunning = false;
+        sendOverlayStateBroadcast(false);
+
+         // Stop updates
+         updateHandler.removeCallbacks(updateRunnable);
+
+         // Unregister receivers
+         try {
+             unregisterReceiver(stateAndConfigReceiver);
+         } catch (Exception ignored) {
          }
-     }
+
+         // Remove floating view from screen
+        if (overlayView != null && windowManager != null) {
+            try {
+                windowManager.removeView(overlayView);
+            } catch (Exception e) {
+                Log.e(TAG, "Error removing overlay: " + e.getMessage());
+            }
+        }
+    }
 
      private void sendOverlayStateBroadcast(boolean running) {
          Intent intent = new Intent(ACTION_OVERLAY_STATE_CHANGED);

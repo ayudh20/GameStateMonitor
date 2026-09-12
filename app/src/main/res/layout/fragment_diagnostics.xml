@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollDiagnostics"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/figma_bg_dark"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="96dp">
+
+        <!-- Title Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="System Diagnostics"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:letterSpacing="0.06"
+            android:text="LOW-LEVEL KERNEL &amp; HARDWARE TELEMETRY"
+            android:textColor="@color/figma_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- CARD: PER-CORE CPU FREQUENCIES -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerCoreFrequencies"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="8 CORES ACTIVE"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_cpu"
+                    app:headerTitle="CPU Core Frequency Grid" />
+
+                <TextView
+                    android:id="@+id/tvGovernorInfo"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Governor: schedutil | Cluster: 4x Silver + 4x Gold"
+                    android:textColor="@color/figma_text_muted"
+                    android:textSize="11sp" />
+
+                <!-- Dynamic Core Frequency Rows -->
+                <LinearLayout
+                    android:id="@+id/layoutCpuCoresContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <!-- Cores 0-3 (LITTLE cluster) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="4">
+
+                        <TextView
+                            android:id="@+id/tvCore0"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C0\n1766 MHz"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C1\n1766 MHz"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C2\n1766 MHz"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C3\n1766 MHz"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <!-- Cores 4-7 (BIG cluster) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal"
+                        android:weightSum="4">
+
+                        <TextView
+                            android:id="@+id/tvCore4"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C4\n2803 MHz"
+                            android:textColor="@color/status_moderate"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore5"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C5\n2803 MHz"
+                            android:textColor="@color/status_moderate"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore6"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C6\n2803 MHz"
+                            android:textColor="@color/status_moderate"
+                            android:textSize="11sp" />
+
+                        <TextView
+                            android:id="@+id/tvCore7"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="C7\n2803 MHz"
+                            android:textColor="@color/status_moderate"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- CARD: THERMAL SENSORS & THROTTLING STATUS -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerThermals"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="NORMAL"
+                    app:headerEndTextColor="@color/status_optimal"
+                    app:headerIcon="@drawable/ic_battery"
+                    app:headerTitle="Thermal Sensors Breakdown" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDiagBatteryTemp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="Battery Sensor"
+                        app:rowValue="31.2°C"
+                        app:rowValueColor="@color/figma_cyan" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDiagCpuTemp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="CPU Cluster Thermal Zone"
+                        app:rowValue="38.5°C" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDiagGpuTemp"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="GPU / Skin Temperature"
+                        app:rowValue="34.0°C" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowDiagThrottlingLevel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Kernel Thermal Throttling"
+                        app:rowValue="None (0 / 5)"
+                        app:rowValueColor="@color/status_optimal" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- CARD: GPU GRAPHICS PIPELINE -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerGpuPipeline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndText="HARDWARE ACCEL"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_gpu"
+                    app:headerTitle="GPU Pipeline &amp; Graphics APIs" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowGpuModel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:rowLabel="GPU Model"
+                        app:rowValue="Qualcomm Adreno 630" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowGpuDriver"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Graphics Driver"
+                        app:rowValue="Vulkan 1.3 / OpenGL ES 3.2" />
+
+                    <com.gamestate.monitor.ui.KeyValueRowView
+                        android:id="@+id/rowGpuClockRange"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:rowLabel="Clock Frequencies"
+                        app:rowValue="257 MHz - 710 MHz" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

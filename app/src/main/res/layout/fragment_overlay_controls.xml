@@ -1,0 +1,650 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollOverlayControls"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/figma_bg_dark"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingTop="20dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="96dp">
+
+        <!-- Title Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Overlay Customization"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:letterSpacing="0.06"
+            android:text="LIVE HUD STYLING &amp; FLOATING CONTROLS"
+            android:textColor="@color/figma_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <!-- ============================================================ -->
+        <!-- LIVE HUD PREVIEW CARD                                        -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:id="@+id/headerHudPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerEndBadgeBackground="@drawable/bg_status_badge"
+                    app:headerEndText="INACTIVE"
+                    app:headerEndTextColor="@color/figma_cyan"
+                    app:headerIcon="@drawable/ic_display"
+                    app:headerTitle="Live HUD Preview" />
+
+                <!-- Simulated Gaming Background with Centered Live Pill -->
+                <FrameLayout
+                    android:id="@+id/flPreviewStage"
+                    android:layout_width="match_parent"
+                    android:layout_height="110dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/bg_inner_container">
+
+                    <!-- Watermark / Hint -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="8dp"
+                        android:layout_marginEnd="10dp"
+                        android:text="PREVIEW STAGE"
+                        android:textColor="#33FFFFFF"
+                        android:textSize="9sp"
+                        android:textStyle="bold" />
+
+                    <!-- Live HUD Pill inside Preview -->
+                    <LinearLayout
+                        android:id="@+id/previewPillView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:background="@drawable/bg_overlay_pill"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="12dp"
+                        android:paddingTop="6dp"
+                        android:paddingEnd="12dp"
+                        android:paddingBottom="6dp">
+
+                        <ImageView
+                            android:layout_width="14dp"
+                            android:layout_height="14dp"
+                            android:src="@drawable/ic_drag_handle"
+                            app:tint="@color/text_muted" />
+
+                        <View
+                            android:id="@+id/vPreviewDot"
+                            android:layout_width="8dp"
+                            android:layout_height="8dp"
+                            android:layout_marginStart="6dp"
+                            android:background="@drawable/bg_status_badge"
+                            android:backgroundTint="@color/status_optimal" />
+
+                        <TextView
+                            android:id="@+id/tvPreviewFps"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="60 FPS"
+                            android:textColor="@color/figma_cyan"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvPreviewCpu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="CPU 42%"
+                            android:textColor="@color/white"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvPreviewGpu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="GPU 35%"
+                            android:textColor="@color/white"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvPreviewRam"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="RAM 64%"
+                            android:textColor="@color/white"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/tvPreviewTemp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:text="31°C"
+                            android:textColor="@color/accent_yellow"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <!-- Master Start/Stop Action Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnMasterToggleOverlay"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="14dp"
+                    android:text="Launch Gaming Overlay"
+                    android:textColor="@color/black"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/figma_cyan"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_display"
+                    app:iconGravity="textStart"
+                    app:iconTint="@color/black" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- OVERLAY PRESETS CARD                                         -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_device"
+                    app:headerTitle="Overlay Presets" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:weightSum="3">
+
+                    <!-- Preset 1: Compact -->
+                    <TextView
+                        android:id="@+id/chipPresetCompact"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_chip_figma_inactive"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Compact"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- Preset 2: Balanced -->
+                    <TextView
+                        android:id="@+id/chipPresetBalanced"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_marginEnd="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_chip_figma_active"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Balanced"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <!-- Preset 3: Detailed -->
+                    <TextView
+                        android:id="@+id/chipPresetDetailed"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="4dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_chip_figma_inactive"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Detailed"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- METRIC VISIBILITY CARD                                       -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_pulse"
+                    app:headerTitle="Metric Visibility" />
+
+                <!-- Switch 1: FPS -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchFps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:checked="true"
+                    android:text="FPS (Real-time Frame Rate)"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 2: CPU Load -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchCpu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="CPU Usage Percentage"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 3: GPU Load -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchGpu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="GPU Graphics Usage"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 4: RAM Load -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchRam"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="RAM Memory Usage"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 5: Battery Temp -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchBatTemp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="true"
+                    android:text="Battery Temperature"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 6: CPU Temp -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchCpuTemp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="false"
+                    android:text="CPU Cluster Temperature"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 7: Battery Level -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchBatLevel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="false"
+                    android:text="Battery Percentage %"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 8: Refresh Rate -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchRefreshRate"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="false"
+                    android:text="Display Refresh Rate (Hz)"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <!-- Switch 9: Game Name -->
+                <com.google.android.material.materialswitch.MaterialSwitch
+                    android:id="@+id/switchGameName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:checked="false"
+                    android:text="Active Game Title"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- APPEARANCE & STYLING CARD                                    -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_device"
+                    app:headerTitle="HUD Visual Styling" />
+
+                <!-- Opacity Slider -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Background Opacity"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvOpacityValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="90%"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sliderOpacity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:value="90.0"
+                    android:valueFrom="20.0"
+                    android:valueTo="100.0"
+                    android:stepSize="5.0"
+                    app:thumbColor="@color/figma_cyan"
+                    app:trackColorActive="@color/figma_cyan"
+                    app:trackColorInactive="@color/figma_progress_track" />
+
+                <!-- Text Size Slider -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="HUD Text Size"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvTextSizeValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="12 sp"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sliderTextSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:value="12.0"
+                    android:valueFrom="10.0"
+                    android:valueTo="18.0"
+                    android:stepSize="1.0"
+                    app:thumbColor="@color/figma_cyan"
+                    app:trackColorActive="@color/figma_cyan"
+                    app:trackColorInactive="@color/figma_progress_track" />
+
+                <!-- Corner Radius Slider -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Corner Radius"
+                        android:textColor="@color/white"
+                        android:textSize="13sp" />
+
+                    <TextView
+                        android:id="@+id/tvCornerRadiusValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="16 dp"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <com.google.android.material.slider.Slider
+                    android:id="@+id/sliderCornerRadius"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:value="16.0"
+                    android:valueFrom="4.0"
+                    android:valueTo="28.0"
+                    android:stepSize="2.0"
+                    app:thumbColor="@color/figma_cyan"
+                    app:trackColorActive="@color/figma_cyan"
+                    app:trackColorInactive="@color/figma_progress_track" />
+
+                <!-- Accent Color Picker Swatches -->
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Accent Color"
+                    android:textColor="@color/white"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <!-- Cyan Swatch -->
+                    <View
+                        android:id="@+id/swatchCyan"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_center_halo"
+                        android:backgroundTint="#00D2E0"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Green Swatch -->
+                    <View
+                        android:id="@+id/swatchGreen"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_center_halo"
+                        android:backgroundTint="#00E676"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Amber Swatch -->
+                    <View
+                        android:id="@+id/swatchAmber"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_center_halo"
+                        android:backgroundTint="#FF9100"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Red Swatch -->
+                    <View
+                        android:id="@+id/swatchRed"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:layout_marginEnd="12dp"
+                        android:background="@drawable/bg_center_halo"
+                        android:backgroundTint="#FF5252"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <!-- Purple Swatch -->
+                    <View
+                        android:id="@+id/swatchPurple"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_center_halo"
+                        android:backgroundTint="#7C4DFF"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ============================================================ -->
+        <!-- POSITION & CORNER SNAPPING                                   -->
+        <!-- ============================================================ -->
+        <com.google.android.material.card.MaterialCardView
+            style="@style/Widget.GameState.Card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/card_spacing">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <com.gamestate.monitor.ui.CardHeaderView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:headerIcon="@drawable/ic_drag_handle"
+                    app:headerTitle="Positioning Mode" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <TextView
+                        android:id="@+id/btnPosFreeDrag"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_chip_figma_active"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Free Drag"
+                        android:textColor="@color/figma_cyan"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/btnPosTopRight"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_chip_figma_inactive"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:gravity="center"
+                        android:text="Snap Top Right"
+                        android:textColor="@color/figma_text_muted"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

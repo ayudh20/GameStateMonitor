@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/dockRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:paddingStart="14dp"
+    android:paddingEnd="14dp"
+    android:paddingBottom="14dp">
+
+    <!-- Floating Dock Background Bar -->
+    <LinearLayout
+        android:id="@+id/dockBar"
+        android:layout_width="0dp"
+        android:layout_height="64dp"
+        android:background="@drawable/bg_floating_dock"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:elevation="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:weightSum="5"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <!-- Tab 1: Dashboard -->
+        <LinearLayout
+            android:id="@+id/navTabDashboard"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivNavDashboard"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_dashboard"
+                app:tint="@color/figma_cyan" />
+
+            <TextView
+                android:id="@+id/tvNavDashboard"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:letterSpacing="0.04"
+                android:text="Dashboard"
+                android:textColor="@color/figma_cyan"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/indNavDashboard"
+                android:layout_width="12dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_dock_indicator"
+                android:visibility="visible" />
+        </LinearLayout>
+
+        <!-- Tab 2: Diagnostics -->
+        <LinearLayout
+            android:id="@+id/navTabDiagnostics"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivNavDiagnostics"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_diagnostics"
+                app:tint="@color/figma_text_muted" />
+
+            <TextView
+                android:id="@+id/tvNavDiagnostics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:letterSpacing="0.04"
+                android:text="Diagnostics"
+                android:textColor="@color/figma_text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/indNavDiagnostics"
+                android:layout_width="12dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_dock_indicator"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <!-- Tab 3 Placeholder (Center Spacer) -->
+        <View
+            android:id="@+id/navCenterSpacer"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <!-- Tab 4: Statistics -->
+        <LinearLayout
+            android:id="@+id/navTabStatistics"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivNavStatistics"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_statistics"
+                app:tint="@color/figma_text_muted" />
+
+            <TextView
+                android:id="@+id/tvNavStatistics"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:letterSpacing="0.04"
+                android:text="Statistics"
+                android:textColor="@color/figma_text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/indNavStatistics"
+                android:layout_width="12dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_dock_indicator"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+        <!-- Tab 5: Settings -->
+        <LinearLayout
+            android:id="@+id/navTabSettings"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/ivNavSettings"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_nav_settings"
+                app:tint="@color/figma_text_muted" />
+
+            <TextView
+                android:id="@+id/tvNavSettings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:letterSpacing="0.04"
+                android:text="Settings"
+                android:textColor="@color/figma_text_muted"
+                android:textSize="9sp"
+                android:textStyle="bold" />
+
+            <View
+                android:id="@+id/indNavSettings"
+                android:layout_width="12dp"
+                android:layout_height="2dp"
+                android:layout_marginTop="2dp"
+                android:background="@drawable/bg_dock_indicator"
+                android:visibility="invisible" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Pulsing Outer Halo for Center Button -->
+    <View
+        android:id="@+id/centerHalo"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:background="@drawable/bg_center_halo"
+        app:layout_constraintBottom_toBottomOf="@+id/btnNavCenter"
+        app:layout_constraintEnd_toEndOf="@+id/btnNavCenter"
+        app:layout_constraintStart_toStartOf="@+id/btnNavCenter"
+        app:layout_constraintTop_toTopOf="@+id/btnNavCenter" />
+
+    <!-- Center Elevated Glowing Overlay Button -->
+    <FrameLayout
+        android:id="@+id/btnNavCenter"
+        android:layout_width="54dp"
+        android:layout_height="54dp"
+        android:layout_marginBottom="18dp"
+        android:background="@drawable/bg_center_button"
+        android:clickable="true"
+        android:elevation="10dp"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
+        app:layout_constraintBottom_toBottomOf="@+id/dockBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/ivNavCenterIcon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_nav_overlay"
+            app:tint="@color/black" />
+    </FrameLayout>
+
+    <!-- Center Status Text underneath elevated button -->
+    <TextView
+        android:id="@+id/tvCenterOverlayStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="4dp"
+        android:elevation="12dp"
+        android:letterSpacing="0.05"
+        android:text="OVERLAY"
+        android:textColor="@color/figma_cyan"
+        android:textSize="8sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@+id/dockBar"
+        app:layout_constraintEnd_toEndOf="@+id/btnNavCenter"
+        app:layout_constraintStart_toStartOf="@+id/btnNavCenter" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

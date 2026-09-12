@@ -262,6 +262,21 @@ public class CpuMonitor {
         return Float.NaN;
     }
 
+    public int[] getPerCoreFrequenciesMhz() {
+        int coreCount = getCoreCount();
+        int[] freqs = new int[coreCount];
+        for (int i = 0; i < coreCount; i++) {
+            int curKhz = readSysfsInt("/sys/devices/system/cpu/cpu" + i + "/cpufreq/scaling_cur_freq");
+            freqs[i] = curKhz > 0 ? curKhz / 1000 : 0;
+        }
+        return freqs;
+    }
+
+    public String getCpuGovernor() {
+        String gov = readSysfsString("/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor");
+        return gov != null ? gov.trim() : "schedutil";
+    }
+
     private String readSysfsString(String path) {
         File file = new File(path);
         if (!file.exists()) return null;
