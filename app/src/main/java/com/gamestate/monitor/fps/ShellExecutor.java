@@ -11,8 +11,8 @@ import java.io.IOException;
  * -------------
  * Unified shell command execution layer.
  * Prioritizes:
- * 1. Shizuku remote process (if Shizuku is running and authorized)
- * 2. Direct Runtime.getRuntime().exec() (if DUMP permission or shell privileges are present)
+ * 1. Shizuku remote process (wireless on-device ADB IPC)
+ * 2. Direct Runtime.getRuntime().exec() (if DUMP permission is present)
  */
 public class ShellExecutor {
 
@@ -34,26 +34,7 @@ public class ShellExecutor {
             }
         }
 
-        // Priority 2: Root execution via su if rooted
-        if (RootUtils.isRootAvailable()) {
-            try {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < command.length; i++) {
-                    if (i > 0) sb.append(" ");
-                    sb.append(escapeShellArg(command[i]));
-                }
-                return Runtime.getRuntime().exec(new String[]{"su", "-c", sb.toString()});
-            } catch (Throwable t) {
-                Log.w(TAG, "Root su exec failed: " + t.getMessage());
-            }
-        }
-
-        // Priority 3: Standard Runtime exec
+        // Priority 2: Standard Runtime exec
         return Runtime.getRuntime().exec(command);
-    }
-
-    private static String escapeShellArg(String arg) {
-        if (arg == null) return "''";
-        return "'" + arg.replace("'", "'\\''") + "'";
     }
 }

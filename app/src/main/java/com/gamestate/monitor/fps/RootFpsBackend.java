@@ -5,14 +5,11 @@ import android.content.Context;
 /**
  * RootFpsBackend
  * --------------
- * FPS data provider utilizing elevated root (su) shell privileges.
- * Inherits the full SurfaceFlinger hardware timing and BLAST frame pacing engine,
- * executing shell commands via su / RootUtils without requiring tethered ADB or Shizuku.
+ * Disabled in favor of Shizuku.
  */
-public class RootFpsBackend extends SurfaceFlingerFpsBackend {
+public class RootFpsBackend implements FpsBackend {
 
     public RootFpsBackend(Context context) {
-        super(context);
     }
 
     @Override
@@ -27,14 +24,29 @@ public class RootFpsBackend extends SurfaceFlingerFpsBackend {
 
     @Override
     public boolean isAvailable(Context context) {
-        return RootUtils.isRootAvailable();
+        return false;
     }
 
     @Override
     public AvailabilityStatus getAvailabilityStatus(Context context) {
-        if (isAvailable(context)) {
-            return AvailabilityStatus.AVAILABLE;
-        }
         return AvailabilityStatus.REQUIRES_ROOT;
+    }
+
+    @Override
+    public void startMonitoring(String targetPackage, FpsDataCallback callback) {
+    }
+
+    @Override
+    public void stopMonitoring() {
+    }
+
+    @Override
+    public boolean isMonitoring() {
+        return false;
+    }
+
+    @Override
+    public FpsMetrics getLatestMetrics() {
+        return FpsMetrics.empty(60.0f);
     }
 }
