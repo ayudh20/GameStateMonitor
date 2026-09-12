@@ -326,7 +326,7 @@ public class OverlayService extends Service {
 
         com.gamestate.monitor.fps.GameStateInfo gameState = GameStateService.getCurrentGameState();
         com.gamestate.monitor.fps.FpsMetrics fpsMetrics = GameStateService.getCurrentMetrics();
-        if (gameState != null && gameState.hasGame() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
+        if (gameState != null && gameState.hasGame() && gameState.isForeground() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
             tvOverlayGpu.setText(String.format("FPS %.0f", fpsMetrics.getCurrentFps()));
         } else if (gpuMonitor != null) {
             GpuInfo liveGpu = gpuMonitor.sampleGpuInfo();
@@ -360,11 +360,15 @@ public class OverlayService extends Service {
                         cpuInfo.getUsagePercentage(), cpuInfo.getCoreCount(), cpuInfo.getAverageFrequencyGhz()));
             }
 
-            if (gameState != null && gameState.hasGame() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
-                tvOverlayGpuDetails.setText(String.format("FPS: %.1f FPS • %.1f ms (%s)",
-                        fpsMetrics.getCurrentFps(),
-                        fpsMetrics.hasValidFrameTime() ? fpsMetrics.getAverageFrameTimeMs() : (1000.0f / fpsMetrics.getCurrentFps()),
-                        gameState.getAppName()));
+            if (gameState != null && gameState.hasGame()) {
+                if (gameState.isForeground() && fpsMetrics != null && fpsMetrics.hasValidFps()) {
+                    tvOverlayGpuDetails.setText(String.format("FPS: %.1f FPS • %.1f ms (%s)",
+                            fpsMetrics.getCurrentFps(),
+                            fpsMetrics.hasValidFrameTime() ? fpsMetrics.getAverageFrameTimeMs() : (1000.0f / fpsMetrics.getCurrentFps()),
+                            gameState.getAppName()));
+                } else {
+                    tvOverlayGpuDetails.setText(String.format("Game: %s (Background)", gameState.getAppName()));
+                }
             } else if (cachedGpuInfo != null) {
                 GpuInfo liveGpu = gpuMonitor != null ? gpuMonitor.sampleGpuInfo() : cachedGpuInfo;
                 int gpuUsage = liveGpu.getGpuUsagePercentage();

@@ -652,17 +652,29 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
 
-        if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE && metrics != null && metrics.hasValidFps()) {
-            headerFps.setEndText(String.format("ACTIVE • %.0f FPS", metrics.getCurrentFps()));
-            headerFps.setEndTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        if (gameState != null && gameState.hasGame()) {
+            if (gameState.isForeground()) {
+                if (metrics != null && metrics.hasValidFps()) {
+                    headerFps.setEndText(String.format("ACTIVE • %.0f FPS", metrics.getCurrentFps()));
+                } else {
+                    headerFps.setEndText("ACTIVE (FOREGROUND)");
+                }
+                headerFps.setEndTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+                rowFpsStatus.setValue(monitorState.getDisplayStatus());
+                rowFpsStatus.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+            } else {
+                // Game running in background (in task manager)
+                headerFps.setEndText("ACTIVE (BACKGROUND)");
+                headerFps.setEndTextColor(ContextCompat.getColor(this, R.color.figma_cyan));
+                rowFpsStatus.setValue("Game Active (In Background)");
+                rowFpsStatus.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+            }
         } else {
             headerFps.setEndText(monitorState.getBadgeText());
             headerFps.setEndTextColor(badgeColor);
+            rowFpsStatus.setValue(monitorState.getDisplayStatus());
+            rowFpsStatus.setValueColor(badgeColor);
         }
-
-        // 2. FPS Status
-        rowFpsStatus.setValue(monitorState.getDisplayStatus());
-        rowFpsStatus.setValueColor(badgeColor);
 
         // 3. FPS Source
         rowFpsSource.setValue(activeBackend.getName());
@@ -674,15 +686,25 @@ public class MainActivity extends AppCompatActivity {
                 : ContextCompat.getColor(this, R.color.figma_text_muted));
 
         // 5. Active Game
-        rowActiveGame.setValue(gameState.getFormattedTitle());
-        rowActiveGame.setValueColor(gameState.hasGame()
-                ? ContextCompat.getColor(this, R.color.figma_cyan)
-                : ContextCompat.getColor(this, R.color.figma_text_muted));
+        if (gameState != null && gameState.hasGame()) {
+            String title = gameState.getFormattedTitle();
+            if (!gameState.isForeground()) {
+                title += " • Running in Background";
+            }
+            rowActiveGame.setValue(title);
+            rowActiveGame.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else {
+            rowActiveGame.setValue("No Game Detected");
+            rowActiveGame.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
+        }
 
         // 6. Frame Pacing Engine Sub-panel (Zero Fake Values)
-        if (metrics != null && metrics.hasValidFps()) {
+        if (gameState != null && gameState.hasGame() && gameState.isForeground() && metrics != null && metrics.hasValidFps()) {
             rowCurrentFps.setValue(String.format("%.1f FPS", metrics.getCurrentFps()));
             rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (gameState != null && gameState.hasGame() && !gameState.isForeground()) {
+            rowCurrentFps.setValue("Paused (Game in background)");
+            rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
             rowCurrentFps.setValue("Sampling frames...");
             rowCurrentFps.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
@@ -695,9 +717,12 @@ public class MainActivity extends AppCompatActivity {
         if (refreshRate <= 0) refreshRate = 60.0f;
         rowTargetRefreshRate.setValue(String.format("%.0f Hz", refreshRate));
 
-        if (metrics != null && metrics.hasValidFrameTime()) {
+        if (gameState != null && gameState.hasGame() && gameState.isForeground() && metrics != null && metrics.hasValidFrameTime()) {
             rowFrameTime.setValue(String.format("%.1f ms", metrics.getAverageFrameTimeMs()));
             rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (gameState != null && gameState.hasGame() && !gameState.isForeground()) {
+            rowFrameTime.setValue("Paused (Game in background)");
+            rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
             rowFrameTime.setValue("Sampling frames...");
             rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
@@ -706,9 +731,12 @@ public class MainActivity extends AppCompatActivity {
             rowFrameTime.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         }
 
-        if (metrics != null && metrics.hasValidOnePercentLow()) {
+        if (gameState != null && gameState.hasGame() && gameState.isForeground() && metrics != null && metrics.hasValidOnePercentLow()) {
             rowOnePercentLow.setValue(String.format("%.1f FPS", metrics.getOnePercentLowFps()));
             rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
+        } else if (gameState != null && gameState.hasGame() && !gameState.isForeground()) {
+            rowOnePercentLow.setValue("Paused (Game in background)");
+            rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         } else if (monitorState == FpsMonitorState.FPS_MONITORING_ACTIVE) {
             rowOnePercentLow.setValue("Sampling frames...");
             rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
@@ -717,7 +745,7 @@ public class MainActivity extends AppCompatActivity {
             rowOnePercentLow.setValueColor(ContextCompat.getColor(this, R.color.figma_text_muted));
         }
 
-        if (metrics != null && metrics.hasValidFps()) {
+        if (gameState != null && gameState.hasGame() && gameState.isForeground() && metrics != null && metrics.hasValidFps()) {
             rowDroppedFrames.setValue(String.format("%d dropped / %d janks", metrics.getDroppedFrames(), metrics.getJankCount()));
             rowDroppedFrames.setValueColor(ContextCompat.getColor(this, R.color.figma_cyan));
         } else {

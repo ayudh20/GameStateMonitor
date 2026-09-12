@@ -83,73 +83,102 @@ public class GameDetector {
     }
 
     /**
-     * Samples the current active game with instant reset and strict liveness verification.
-     * When a game is minimized, closed, or switched away from, this immediately returns
-     * GameStateInfo.none() (0 delay) instead of lingering in an active state.
+     * Samples the current active game state.
+     * - If the game is running in foreground: returns GameStateInfo with isForeground = true.
+     * - If the game is in background (still in task manager): returns GameStateInfo with isForeground = false.
+     * - If the game is cleared/swiped away from task manager: immediately returns GameStateInfo.none().
      */
     public GameStateInfo detectForegroundGame() {
-        // 1. If screen is off / not interactive, immediately return no game
+        // 1. If screen is off / not interactive, return none
         try {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             if (pm != null && !pm.isInteractive()) {
                 return GameStateInfo.none();
             }
-            KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
-            if (km != null && km.isKeyguardLocked()) {
-                return GameStateInfo.none();
-            }
         } catch (Exception ignored) {
         }
 
-        // 2. Resolve the active foreground candidate
-        String candidatePkg = resolveActiveGamePackage();
-
-        if (candidatePkg != null && !candidatePkg.isEmpty()) {
-            boolean isGame = isGamePackage(candidatePkg);
-            String appName = getAppLabel(candidatePkg);
-
+        // 2. Priority 1: Check if a game is actively in the FOREGROUND
+        String fgPkg = getAuthoritativeForegroundPackage();
+        if (fgPkg != null && !systemExclusions.contains(fgPkg) && isGamePackage(fgPkg)) {
+            String appName = getAppLabel(fgPkg);
             return new GameStateInfo(
-                    candidatePkg,
+                    fgPkg,
                     appName,
-                    isGame,
                     true,
+                    true, // isForeground = true
                     System.currentTimeMillis()
             );
+        }
+
+        // 3. Priority 2: Check if a game is active in the TASK MANAGER (running in background)
+        boolean hasDump = context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
+        if (hasDump) {
+            String taskManagerGame = getActiveGameFromTaskManager();
+            if (taskManagerGame != null && !taskManagerGame.isEmpty()) {
+                String appName = getAppLabel(taskManagerGame);
+                return new GameStateInfo(
+                        taskManagerGame,
+                        appName,
+                        true,
+                        false, // isForeground = false
+                        System.currentTimeMillis()
+                );
+            }
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && hasUsageStatsPermission()) {
+            String usageGame = getActiveGameFromUsageEvents();
+            if (usageGame != null && !usageGame.isEmpty()) {
+                String appName = getAppLabel(usageGame);
+                return new GameStateInfo(
+                        usageGame,
+                        appName,
+                        true,
+                        false,
+                        System.currentTimeMillis()
+                );
+            }
         }
 
         return GameStateInfo.none();
     }
 
     /**
-     * Authoritative foreground resolver.
-     * Prioritizes live dumpsys WindowManager / ActivityTaskManager focus state.
-     * If the foreground package is a launcher, recents, system UI, or non-game app,
-     * this returns null immediately, guaranteeing no false positives.
+     * Scans the Android Task Manager (Recent Tasks) for an active background game task.
+     * When an app is cleared or swiped away from recent tasks, it is immediately removed from this list.
      */
-    private String resolveActiveGamePackage() {
-        boolean hasDump = context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
+    private String getActiveGameFromTaskManager() {
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "recents"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
 
-        // Tier 1: Authoritative live foreground detection via dumpsys
-        if (hasDump) {
-            String fgPkg = getAuthoritativeForegroundPackage();
-            if (fgPkg != null && !fgPkg.isEmpty()) {
-                // If top foreground package is an excluded system app or not a game:
-                // NO game is currently in the foreground! Immediately return null.
-                if (systemExclusions.contains(fgPkg) || !isGamePackage(fgPkg)) {
-                    return null;
+            while ((line = reader.readLine()) != null) {
+                // Check live task activities: Activities=[ActivityRecord{... u0 <package>/... t<id>}]
+                if (line.contains("Activities=[ActivityRecord{")) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
+                        reader.close();
+                        return pkg;
+                    }
                 }
-                return fgPkg;
+                // Check task affinity: affinity=<uid>:<package>
+                else if (line.contains("affinity=") && !line.contains("affinity=null")) {
+                    int colon = line.indexOf(':');
+                    if (colon > 0) {
+                        String pkg = line.substring(colon + 1).trim();
+                        if (!systemExclusions.contains(pkg) && isGamePackage(pkg)) {
+                            if (isPackageProcessAlive(pkg)) {
+                                reader.close();
+                                return pkg;
+                            }
+                        }
+                    }
+                }
             }
+            reader.close();
+        } catch (Exception e) {
+            Log.d(TAG, "Error scanning task manager: " + e.getMessage());
         }
-
-        // Tier 2: UsageStatsManager Events (Chronological stream fallback)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && hasUsageStatsPermission()) {
-            String usageGame = getActiveGameFromUsageEvents();
-            if (usageGame != null) {
-                return usageGame;
-            }
-        }
-
         return null;
     }
 
