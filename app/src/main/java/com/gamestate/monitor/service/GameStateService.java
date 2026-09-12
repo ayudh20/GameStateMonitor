@@ -48,7 +48,7 @@ public class GameStateService extends Service implements FpsDataCallback {
 
     private final IBinder binder = new LocalBinder();
     private final Handler loopHandler = new Handler(Looper.getMainLooper());
-    private static final long SCAN_INTERVAL_MS = 1200;
+    private static final long SCAN_INTERVAL_MS = 1000;
 
     private GameDetector gameDetector;
     private FpsBackendManager backendManager;

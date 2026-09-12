@@ -5,8 +5,10 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.ServiceInfo;
 import android.content.res.ColorStateList;
 import android.graphics.PixelFormat;
@@ -138,7 +140,28 @@ public class OverlayService extends Service {
 
         // 3. Start real-time monitoring loop
         updateHandler.post(updateRunnable);
+
+        // 4. Register for instant game state and FPS updates
+        try {
+            IntentFilter filter = new IntentFilter(GameStateService.ACTION_GAME_STATE_UPDATED);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(gameStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+            } else {
+                registerReceiver(gameStateReceiver, filter);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "Error registering gameStateReceiver: " + e.getMessage());
+        }
     }
+
+    private final BroadcastReceiver gameStateReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (GameStateService.ACTION_GAME_STATE_UPDATED.equals(intent.getAction())) {
+                updateHudMetrics();
+            }
+        }
+    };
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -415,10 +438,16 @@ public class OverlayService extends Service {
          isRunning = false;
          sendOverlayStateBroadcast(false);
 
-         // Stop updates
-         updateHandler.removeCallbacks(updateRunnable);
+          // Stop updates
+          updateHandler.removeCallbacks(updateRunnable);
 
-         // Remove floating view from screen
+          // Unregister game state receiver
+          try {
+              unregisterReceiver(gameStateReceiver);
+          } catch (Exception ignored) {
+          }
+
+          // Remove floating view from screen
          if (overlayView != null && windowManager != null) {
              try {
                  windowManager.removeView(overlayView);

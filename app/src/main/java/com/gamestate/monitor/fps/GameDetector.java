@@ -2,6 +2,7 @@ package com.gamestate.monitor.fps;
 
 import android.app.ActivityManager;
 import android.app.AppOpsManager;
+import android.app.KeyguardManager;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
@@ -10,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Log;
 
@@ -81,62 +83,70 @@ public class GameDetector {
     }
 
     /**
-     * Samples the current active game, strictly verifying that the game's process
-     * is alive and running on the system.
+     * Samples the current active game with instant reset and strict liveness verification.
+     * When a game is minimized, closed, or switched away from, this immediately returns
+     * GameStateInfo.none() (0 delay) instead of lingering in an active state.
      */
     public GameStateInfo detectForegroundGame() {
+        // 1. If screen is off / not interactive, immediately return no game
+        try {
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            if (pm != null && !pm.isInteractive()) {
+                return GameStateInfo.none();
+            }
+            KeyguardManager km = (KeyguardManager) context.getSystemService(Context.KEYGUARD_SERVICE);
+            if (km != null && km.isKeyguardLocked()) {
+                return GameStateInfo.none();
+            }
+        } catch (Exception ignored) {
+        }
+
+        // 2. Resolve the active foreground candidate
         String candidatePkg = resolveActiveGamePackage();
 
         if (candidatePkg != null && !candidatePkg.isEmpty()) {
-            // Verify that the process is actually running right now
-            if (isPackageProcessAlive(candidatePkg)) {
-                boolean isGame = isGamePackage(candidatePkg);
-                String appName = getAppLabel(candidatePkg);
+            boolean isGame = isGamePackage(candidatePkg);
+            String appName = getAppLabel(candidatePkg);
 
-                return new GameStateInfo(
-                        candidatePkg,
-                        appName,
-                        isGame,
-                        true,
-                        System.currentTimeMillis()
-                );
-            }
+            return new GameStateInfo(
+                    candidatePkg,
+                    appName,
+                    isGame,
+                    true,
+                    System.currentTimeMillis()
+            );
         }
 
         return GameStateInfo.none();
     }
 
     /**
-     * Multi-tiered resolver to find the active game package candidate.
+     * Authoritative foreground resolver.
+     * Prioritizes live dumpsys WindowManager / ActivityTaskManager focus state.
+     * If the foreground package is a launcher, recents, system UI, or non-game app,
+     * this returns null immediately, guaranteeing no false positives.
      */
     private String resolveActiveGamePackage() {
         boolean hasDump = context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED;
 
-        // Tier 1: Check SurfaceFlinger for active game composition surfaces
+        // Tier 1: Authoritative live foreground detection via dumpsys
         if (hasDump) {
-            String sfGame = getActiveGameFromSurfaceFlinger();
-            if (sfGame != null) {
-                return sfGame;
-            }
-
-            // Tier 2: Check current activity stack (top resumed activity)
-            String activityGame = getActiveGameFromActivityStack();
-            if (activityGame != null) {
-                return activityGame;
+            String fgPkg = getAuthoritativeForegroundPackage();
+            if (fgPkg != null && !fgPkg.isEmpty()) {
+                // If top foreground package is an excluded system app or not a game:
+                // NO game is currently in the foreground! Immediately return null.
+                if (systemExclusions.contains(fgPkg) || !isGamePackage(fgPkg)) {
+                    return null;
+                }
+                return fgPkg;
             }
         }
 
-        // Tier 3: UsageStatsManager Events within short 30-second window
+        // Tier 2: UsageStatsManager Events (Chronological stream fallback)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1 && hasUsageStatsPermission()) {
             String usageGame = getActiveGameFromUsageEvents();
             if (usageGame != null) {
                 return usageGame;
-            }
-
-            // Tier 4: UsageStats queryUsageStats within 30-second window
-            String statsGame = getActiveGameFromUsageStats();
-            if (statsGame != null) {
-                return statsGame;
             }
         }
 
@@ -144,8 +154,54 @@ public class GameDetector {
     }
 
     /**
+     * Queries dumpsys activity activities and dumpsys window displays for the active foreground package.
+     */
+    private String getAuthoritativeForegroundPackage() {
+        // 1. Check dumpsys activity activities (topResumedActivity is at the very top)
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "activities"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            int linesRead = 0;
+            while ((line = reader.readLine()) != null && linesRead < 50) {
+                linesRead++;
+                if (line.contains("topResumedActivity=") || line.contains("ResumedActivity:") || line.contains("mFocusedApp=")) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !pkg.isEmpty()) {
+                        reader.close();
+                        return pkg;
+                    }
+                }
+            }
+            reader.close();
+        } catch (Exception e) {
+            Log.d(TAG, "Error checking dumpsys activity activities: " + e.getMessage());
+        }
+
+        // 2. Fallback: Check dumpsys window displays (mCurrentFocus / mFocusedApp)
+        try {
+            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "window", "displays"});
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains("mCurrentFocus=Window{") || line.contains("mFocusedApp=ActivityRecord{")) {
+                    String pkg = extractPackageFromLine(line);
+                    if (pkg != null && !pkg.isEmpty()) {
+                        reader.close();
+                        return pkg;
+                    }
+                }
+            }
+            reader.close();
+        } catch (Exception e) {
+            Log.d(TAG, "Error checking dumpsys window displays: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
      * Strictly verifies whether an application's process is currently running on the device.
-     * When a user swipes away or clears an app from recents, its process and tasks terminate.
      */
     public boolean isPackageProcessAlive(String packageName) {
         if (packageName == null || packageName.isEmpty()) return false;
@@ -166,9 +222,7 @@ public class GameDetector {
                     }
                 }
                 reader.close();
-                if (isAlive) return true;
-                // Also check if any active SurfaceFlinger layer exists for this package
-                return hasSurfaceFlingerLayer(packageName);
+                return isAlive;
             } catch (Exception e) {
                 Log.d(TAG, "Error checking process liveness via dumpsys: " + e.getMessage());
             }
@@ -194,86 +248,9 @@ public class GameDetector {
     }
 
     /**
-     * Checks if any SurfaceView or ActivityRecord layers are currently active in SurfaceFlinger.
-     */
-    private boolean hasSurfaceFlingerLayer(String packageName) {
-        try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "SurfaceFlinger", "--list"});
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains(packageName) && (line.contains("SurfaceView[") || line.contains("ActivityRecord{"))) {
-                    reader.close();
-                    return true;
-                }
-            }
-            reader.close();
-        } catch (Exception ignored) {
-        }
-        return false;
-    }
-
-    /**
-     * Scans SurfaceFlinger for active game hardware surfaces (e.g. SurfaceView[com.pubg.imobile/...]).
-     */
-    private String getActiveGameFromSurfaceFlinger() {
-        try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "SurfaceFlinger", "--list"});
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("SurfaceView[")) {
-                    String pkg = extractPackageFromLine(line);
-                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
-                        reader.close();
-                        return pkg;
-                    }
-                }
-            }
-            reader.close();
-        } catch (Exception e) {
-            Log.d(TAG, "Error scanning SurfaceFlinger: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Scans activity stack for the top resumed game activity.
-     */
-    private String getActiveGameFromActivityStack() {
-        try {
-            java.lang.Process process = Runtime.getRuntime().exec(new String[]{"dumpsys", "activity", "activities"});
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            String topGame = null;
-
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("topResumedActivity=") || line.contains("ResumedActivity:") || line.contains("mFocusedApp=")) {
-                    String pkg = extractPackageFromLine(line);
-                    if (pkg != null && !systemExclusions.contains(pkg)) {
-                        if (isGamePackage(pkg)) {
-                            reader.close();
-                            return pkg;
-                        }
-                    }
-                } else if (line.contains("ActivityRecord{") && topGame == null) {
-                    String pkg = extractPackageFromLine(line);
-                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
-                        topGame = pkg;
-                    }
-                }
-            }
-            reader.close();
-            return topGame;
-        } catch (Exception e) {
-            Log.d(TAG, "Error scanning activity stack: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Inspects UsageEvents within the last 30 seconds.
+     * Chronological UsageEvents parser.
+     * If the most recent resumed app is a game, returns it.
+     * If the game has been paused/stopped, or another app (launcher, recents) was resumed, returns null.
      */
     private String getActiveGameFromUsageEvents() {
         try {
@@ -281,60 +258,33 @@ public class GameDetector {
             if (usm == null) return null;
 
             long endTime = System.currentTimeMillis();
-            long startTime = endTime - ACTIVE_APP_WINDOW_MS;
+            long startTime = endTime - 60 * 1000; // 60 seconds
 
             UsageEvents events = usm.queryEvents(startTime, endTime);
             UsageEvents.Event event = new UsageEvents.Event();
 
-            String lastGame = null;
+            String currentResumedPkg = null;
 
             while (events.hasNextEvent()) {
                 events.getNextEvent(event);
-                if (event.getEventType() == UsageEvents.Event.ACTIVITY_RESUMED) {
-                    String pkg = event.getPackageName();
-                    if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
-                        lastGame = pkg;
+                int type = event.getEventType();
+                String pkg = event.getPackageName();
+                if (pkg == null) continue;
+
+                if (type == UsageEvents.Event.ACTIVITY_RESUMED) {
+                    currentResumedPkg = pkg;
+                } else if (type == UsageEvents.Event.ACTIVITY_PAUSED || type == UsageEvents.Event.ACTIVITY_STOPPED) {
+                    if (pkg.equals(currentResumedPkg)) {
+                        currentResumedPkg = null;
                     }
                 }
             }
 
-            return lastGame;
+            if (currentResumedPkg != null && !systemExclusions.contains(currentResumedPkg) && isGamePackage(currentResumedPkg)) {
+                return currentResumedPkg;
+            }
         } catch (Exception e) {
             Log.d(TAG, "Error querying UsageEvents: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /**
-     * Inspects UsageStats within the last 30 seconds.
-     */
-    private String getActiveGameFromUsageStats() {
-        try {
-            UsageStatsManager usm = (UsageStatsManager) context.getSystemService(Context.USAGE_STATS_SERVICE);
-            if (usm == null) return null;
-
-            long endTime = System.currentTimeMillis();
-            long startTime = endTime - ACTIVE_APP_WINDOW_MS;
-
-            List<UsageStats> statsList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
-            if (statsList == null || statsList.isEmpty()) return null;
-
-            UsageStats mostRecentGame = null;
-
-            for (UsageStats stat : statsList) {
-                String pkg = stat.getPackageName();
-                if (pkg != null && !systemExclusions.contains(pkg) && isGamePackage(pkg)) {
-                    if (mostRecentGame == null || stat.getLastTimeUsed() > mostRecentGame.getLastTimeUsed()) {
-                        mostRecentGame = stat;
-                    }
-                }
-            }
-
-            if (mostRecentGame != null && (endTime - mostRecentGame.getLastTimeUsed() < ACTIVE_APP_WINDOW_MS)) {
-                return mostRecentGame.getPackageName();
-            }
-        } catch (Exception e) {
-            Log.d(TAG, "Error querying UsageStats: " + e.getMessage());
         }
         return null;
     }
