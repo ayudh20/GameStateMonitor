@@ -1,20 +1,26 @@
-﻿name: Build Android APK
+name: Build & Release Android APK
 
 on:
   push:
     branches: [ "main" ]
+    tags: [ "v*" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    name: Build & Generate APK
+    name: Build & Publish Release
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -29,9 +35,36 @@ jobs:
     - name: Build Debug APK with Gradle
       run: ./gradlew assembleDebug --stacktrace
 
+    - name: Prepare Named APK
+      run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/GameStateMonitor.apk
+
     - name: Upload Debug APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: GameStateMonitor-Debug-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+        path: app/build/outputs/apk/debug/GameStateMonitor.apk
         retention-days: 14
+
+    - name: Publish Latest GitHub Release
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/'))
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || 'latest' }}
+        name: ${{ startsWith(github.ref, 'refs/tags/') && format('GameState Monitor {0}', github.ref_name) || 'GameState Monitor (Latest Build)' }}
+        body: |
+          ## GameState Monitor — Latest Release Preview
+          Automated continuous build generated from commit `${{ github.sha }}`.
+
+          ### Features Included:
+          - **Real-Time Performance Diagnostics**: Hardware-accurate CPU %, GPU %, RAM usage, thermals, and battery diagnostics.
+          - **Modular FPS Architecture**: Direct SurfaceFlinger frame timing with zero fake data or estimated values.
+          - **On-Device Wireless ADB via Shizuku**: Direct authorization without connecting to a computer or using USB cables.
+          - **Task Manager Aware Game Detection**: Games remain active when minimized to background recents, resetting only when swiped away.
+          - **Floating Gaming HUD**: Real-time non-intrusive in-game overlay with live FPS streaming.
+
+          Download the APK below to install on your Android device:
+        files: app/build/outputs/apk/debug/GameStateMonitor.apk
+        make_latest: true
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
