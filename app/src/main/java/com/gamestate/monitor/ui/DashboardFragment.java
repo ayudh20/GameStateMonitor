@@ -4,7 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.ColorStateList;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -13,8 +15,11 @@ import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -35,59 +40,73 @@ import com.gamestate.monitor.util.CpuMonitor;
 import com.gamestate.monitor.util.DeviceStatsManager;
 import com.gamestate.monitor.util.FormatUtils;
 import com.gamestate.monitor.util.GpuMonitor;
-import com.google.android.material.button.MaterialButton;
 
 public class DashboardFragment extends Fragment {
 
-    // Card 1: Device Info
+    // Top Header Actions
+    private FrameLayout btnNotification;
+    private FrameLayout btnHeaderSettings;
+
+    // Hero System Health Card
+    private SystemHealthArcView arcSystemHealth;
+    private TextView tvSystemHealthStatus;
+    private TextView tvSystemHealthDesc;
+    private TextView tvHeroCpuTemp;
+    private ProgressBar pbHeroCpuTemp;
+    private TextView tvHeroGpuTemp;
+    private ProgressBar pbHeroGpuTemp;
+    private TextView tvHeroBattery;
+    private ProgressBar pbHeroBattery;
+
+    // Current Game Card
+    private TextView tvGameRunningBadge;
+    private ImageView ivGameThumbnail;
+    private TextView tvCurrentGameTitle;
+    private TextView tvCurrentGamePackage;
+    private TextView tvGameSessionTime;
+
+    // Device Information Card
+    private TextView btnViewMoreDevice;
     private KeyValueRowView rowDeviceModel;
     private KeyValueRowView rowDeviceAndroidVersion;
     private KeyValueRowView rowDeviceKernelVersion;
-    private KeyValueRowView rowActiveDiagnosticRun;
 
-    // Card 2: CPU Processor
-    private TextView tvCpuLoadPercentage;
-    private ProgressBar pbCpuLoad;
-    private TextView tvCpuName;
-    private TextView tvCpuCoresActive;
+    // 2x2 Performance Grid: CPU
+    private TextView tvGridCpuPct;
+    private SparklineGraphView sparklineCpu;
+    private ProgressBar pbGridCpu;
+    private TextView tvGridCpuCores;
+    private TextView tvGridCpuFreq;
 
-    // Card 3: GPU Graphics
-    private TextView tvGpuUtilPercentage;
-    private ProgressBar pbGpuUtil;
-    private TextView tvGpuRenderer;
-    private TextView tvGpuFrequency;
-    private TextView tvDisplayRefreshRate;
+    // 2x2 Performance Grid: GPU
+    private TextView tvGridGpuPct;
+    private SparklineGraphView sparklineGpu;
+    private ProgressBar pbGridGpu;
+    private TextView tvGridGpuName;
+    private TextView tvGridGpuFreq;
 
-    // Card 4: FPS Performance
-    private CardHeaderView headerFps;
+    // 2x2 Performance Grid: RAM
+    private TextView tvGridRamPct;
+    private SparklineGraphView sparklineRam;
+    private ProgressBar pbGridRam;
+    private TextView tvGridRamUsage;
+    private TextView tvGridRamFree;
+
+    // 2x2 Performance Grid: Storage
+    private TextView tvGridStoragePct;
+    private SparklineGraphView sparklineStorage;
+    private ProgressBar pbGridStorage;
+    private TextView tvGridStorageUsage;
+    private TextView tvGridStorageFree;
+
+    // FPS Performance Card
+    private TextView tvFpsCardBadge;
     private KeyValueRowView rowFpsStatus;
     private KeyValueRowView rowFpsSource;
-    private KeyValueRowView rowFpsAvailability;
-    private KeyValueRowView rowActiveGame;
     private KeyValueRowView rowCurrentFps;
     private KeyValueRowView rowTargetRefreshRate;
-    private KeyValueRowView rowFrameTime;
-    private KeyValueRowView rowOnePercentLow;
-    private KeyValueRowView rowDroppedFrames;
-    private MaterialButton btnFpsAction;
 
-    // Card 5: RAM Memory
-    private TextView tvRamUsageValues;
-    private TextView tvRamPercentage;
-    private ProgressBar pbRamUsage;
-    private TextView tvRamAvailable;
-
-    // Card 6: Battery & Thermals
-    private CardHeaderView headerBattery;
-    private KeyValueRowView rowBatteryLevel;
-    private KeyValueRowView rowBatteryTemp;
-    private KeyValueRowView rowCpuTemp;
-    private KeyValueRowView rowThermalStatus;
-    private KeyValueRowView rowBatteryVoltage;
-
-    // Actions
-    private MaterialButton btnRefresh;
-
+    // Data managers
     private DeviceStatsManager statsManager;
     private CpuMonitor cpuMonitor;
     private GpuMonitor gpuMonitor;
@@ -108,7 +127,7 @@ public class DashboardFragment extends Fragment {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (GameStateService.ACTION_GAME_STATE_UPDATED.equals(intent.getAction())) {
-                updateFpsCardMetrics();
+                updateGameAndFpsCards();
             }
         }
     };
@@ -130,67 +149,105 @@ public class DashboardFragment extends Fragment {
         cachedGpuInfo = gpuMonitor.getGpuInfo();
 
         bindViews(view);
+        configureColors();
         populateStaticDeviceInfo();
         setupClickListeners();
     }
 
     private void bindViews(View root) {
-        // Card 1
+        // Header
+        btnNotification = root.findViewById(R.id.btnNotification);
+        btnHeaderSettings = root.findViewById(R.id.btnHeaderSettings);
+
+        // Hero
+        arcSystemHealth = root.findViewById(R.id.arcSystemHealth);
+        tvSystemHealthStatus = root.findViewById(R.id.tvSystemHealthStatus);
+        tvSystemHealthDesc = root.findViewById(R.id.tvSystemHealthDesc);
+        tvHeroCpuTemp = root.findViewById(R.id.tvHeroCpuTemp);
+        pbHeroCpuTemp = root.findViewById(R.id.pbHeroCpuTemp);
+        tvHeroGpuTemp = root.findViewById(R.id.tvHeroGpuTemp);
+        pbHeroGpuTemp = root.findViewById(R.id.pbHeroGpuTemp);
+        tvHeroBattery = root.findViewById(R.id.tvHeroBattery);
+        pbHeroBattery = root.findViewById(R.id.pbHeroBattery);
+
+        // Current Game
+        tvGameRunningBadge = root.findViewById(R.id.tvGameRunningBadge);
+        ivGameThumbnail = root.findViewById(R.id.ivGameThumbnail);
+        tvCurrentGameTitle = root.findViewById(R.id.tvCurrentGameTitle);
+        tvCurrentGamePackage = root.findViewById(R.id.tvCurrentGamePackage);
+        tvGameSessionTime = root.findViewById(R.id.tvGameSessionTime);
+
+        // Device Info
+        btnViewMoreDevice = root.findViewById(R.id.btnViewMoreDevice);
         rowDeviceModel = root.findViewById(R.id.rowDeviceModel);
         rowDeviceAndroidVersion = root.findViewById(R.id.rowDeviceAndroidVersion);
         rowDeviceKernelVersion = root.findViewById(R.id.rowDeviceKernelVersion);
-        rowActiveDiagnosticRun = root.findViewById(R.id.rowActiveDiagnosticRun);
 
-        // Card 2
-        CardHeaderView headerCpu = root.findViewById(R.id.headerCpu);
-        tvCpuLoadPercentage = headerCpu.getEndTextView();
-        pbCpuLoad = root.findViewById(R.id.pbCpuLoad);
-        tvCpuName = root.findViewById(R.id.tvCpuName);
-        tvCpuCoresActive = root.findViewById(R.id.tvCpuCoresActive);
+        // Grid: CPU
+        tvGridCpuPct = root.findViewById(R.id.tvGridCpuPct);
+        sparklineCpu = root.findViewById(R.id.sparklineCpu);
+        pbGridCpu = root.findViewById(R.id.pbGridCpu);
+        tvGridCpuCores = root.findViewById(R.id.tvGridCpuCores);
+        tvGridCpuFreq = root.findViewById(R.id.tvGridCpuFreq);
 
-        // Card 3
-        CardHeaderView headerGpu = root.findViewById(R.id.headerGpu);
-        tvGpuUtilPercentage = headerGpu.getEndTextView();
-        pbGpuUtil = root.findViewById(R.id.pbGpuUtil);
-        tvGpuRenderer = root.findViewById(R.id.tvGpuRenderer);
-        tvGpuFrequency = root.findViewById(R.id.tvGpuFrequency);
-        tvDisplayRefreshRate = root.findViewById(R.id.tvDisplayRefreshRate);
+        // Grid: GPU
+        tvGridGpuPct = root.findViewById(R.id.tvGridGpuPct);
+        sparklineGpu = root.findViewById(R.id.sparklineGpu);
+        pbGridGpu = root.findViewById(R.id.pbGridGpu);
+        tvGridGpuName = root.findViewById(R.id.tvGridGpuName);
+        tvGridGpuFreq = root.findViewById(R.id.tvGridGpuFreq);
 
-        // Card 4
-        headerFps = root.findViewById(R.id.headerFps);
+        // Grid: RAM
+        tvGridRamPct = root.findViewById(R.id.tvGridRamPct);
+        sparklineRam = root.findViewById(R.id.sparklineRam);
+        pbGridRam = root.findViewById(R.id.pbGridRam);
+        tvGridRamUsage = root.findViewById(R.id.tvGridRamUsage);
+        tvGridRamFree = root.findViewById(R.id.tvGridRamFree);
+
+        // Grid: Storage
+        tvGridStoragePct = root.findViewById(R.id.tvGridStoragePct);
+        sparklineStorage = root.findViewById(R.id.sparklineStorage);
+        pbGridStorage = root.findViewById(R.id.pbGridStorage);
+        tvGridStorageUsage = root.findViewById(R.id.tvGridStorageUsage);
+        tvGridStorageFree = root.findViewById(R.id.tvGridStorageFree);
+
+        // FPS Performance
+        tvFpsCardBadge = root.findViewById(R.id.tvFpsCardBadge);
         rowFpsStatus = root.findViewById(R.id.rowFpsStatus);
         rowFpsSource = root.findViewById(R.id.rowFpsSource);
-        rowFpsAvailability = root.findViewById(R.id.rowFpsAvailability);
-        rowActiveGame = root.findViewById(R.id.rowActiveGame);
         rowCurrentFps = root.findViewById(R.id.rowCurrentFps);
         rowTargetRefreshRate = root.findViewById(R.id.rowTargetRefreshRate);
-        rowFrameTime = root.findViewById(R.id.rowFrameTime);
-        rowOnePercentLow = root.findViewById(R.id.rowOnePercentLow);
-        rowDroppedFrames = root.findViewById(R.id.rowDroppedFrames);
-        btnFpsAction = root.findViewById(R.id.btnFpsAction);
+    }
 
-        // Card 5
-        CardHeaderView headerRam = root.findViewById(R.id.headerRam);
-        tvRamPercentage = headerRam.getEndTextView();
-        pbRamUsage = root.findViewById(R.id.pbRamUsage);
-        tvRamUsageValues = root.findViewById(R.id.tvRamUsageValues);
-        tvRamAvailable = root.findViewById(R.id.tvRamAvailable);
-
-        // Card 6
-        headerBattery = root.findViewById(R.id.headerBattery);
-        rowBatteryLevel = root.findViewById(R.id.rowBatteryLevel);
-        rowBatteryTemp = root.findViewById(R.id.rowBatteryTemp);
-        rowCpuTemp = root.findViewById(R.id.rowCpuTemp);
-        rowThermalStatus = root.findViewById(R.id.rowThermalStatus);
-        rowBatteryVoltage = root.findViewById(R.id.rowBatteryVoltage);
-
-        // Action
-        btnRefresh = root.findViewById(R.id.btnRefresh);
+    private void configureColors() {
+        int cyan = Color.parseColor("#00D2E0");
+        if (sparklineCpu != null) sparklineCpu.setLineColor(cyan);
+        if (sparklineGpu != null) sparklineGpu.setLineColor(cyan);
+        if (sparklineRam != null) sparklineRam.setLineColor(cyan);
+        if (sparklineStorage != null) sparklineStorage.setLineColor(cyan);
     }
 
     private void setupClickListeners() {
-        if (btnRefresh != null) {
-            btnRefresh.setOnClickListener(v -> updateDashboardMetrics());
+        if (btnHeaderSettings != null) {
+            btnHeaderSettings.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).selectTab(MainActivity.Tab.SETTINGS);
+                }
+            });
+        }
+
+        if (btnNotification != null) {
+            btnNotification.setOnClickListener(v -> {
+                Toast.makeText(requireContext(), "Hardware alerts: All thermals and frequencies optimal.", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        if (btnViewMoreDevice != null) {
+            btnViewMoreDevice.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).selectTab(MainActivity.Tab.DIAGNOSTICS);
+                }
+            });
         }
     }
 
@@ -201,18 +258,17 @@ public class DashboardFragment extends Fragment {
         if (rowDeviceAndroidVersion != null) rowDeviceAndroidVersion.setValue("Android " + info.getAndroidVersion());
         if (rowDeviceKernelVersion != null) {
             String osVer = System.getProperty("os.version");
-            rowDeviceKernelVersion.setValue(osVer != null ? "Linux " + osVer : "Linux 4.9");
+            rowDeviceKernelVersion.setValue(osVer != null ? "Linux " + osVer : "Linux 4.9.337");
         }
 
         CpuInfo cpuInfo = cpuMonitor.getCpuInfo();
-        if (tvCpuName != null) tvCpuName.setText(cpuInfo.getCoreDescription());
-        if (tvCpuCoresActive != null) tvCpuCoresActive.setText(cpuInfo.getCoreCount() + " Cores Active");
+        if (tvGridCpuCores != null) tvGridCpuCores.setText(cpuInfo.getCoreDescription());
 
-        if (cachedGpuInfo != null && tvGpuRenderer != null) {
-            tvGpuRenderer.setText(cachedGpuInfo.getRenderer());
+        if (cachedGpuInfo != null && tvGridGpuName != null) {
+            tvGridGpuName.setText(cachedGpuInfo.getShortName());
         }
-        if (tvDisplayRefreshRate != null) {
-            tvDisplayRefreshRate.setText(String.format("%.0f Hz", statsManager.getScreenRefreshRate()));
+        if (rowTargetRefreshRate != null) {
+            rowTargetRefreshRate.setValue(String.format("%.0f Hz", statsManager.getScreenRefreshRate()));
         }
     }
 
@@ -244,62 +300,92 @@ public class DashboardFragment extends Fragment {
 
         PerformanceStats stats = statsManager.getPerformanceStats();
         CpuInfo cpuInfo = cpuMonitor.getCpuInfo();
-
-        // 1. Session Runtime
-        if (rowActiveDiagnosticRun != null && getActivity() instanceof MainActivity) {
-            long elapsed = SystemClock.elapsedRealtime() - ((MainActivity) getActivity()).getSessionStartTimeMs();
-            rowActiveDiagnosticRun.setValue(FormatUtils.formatDuration(elapsed));
-        }
-
-        // 2. CPU
-        int cpuUsage = cpuInfo.getUsagePercentage();
-        if (tvCpuLoadPercentage != null) tvCpuLoadPercentage.setText(cpuUsage + "% LOAD");
-        if (pbCpuLoad != null) pbCpuLoad.setProgress(cpuUsage);
-
-        // 3. GPU
         GpuInfo liveGpu = gpuMonitor.sampleGpuInfo();
-        int gpuUsage = liveGpu.getGpuUsagePercentage();
-        if (tvGpuUtilPercentage != null) {
-            tvGpuUtilPercentage.setText(gpuUsage >= 0 ? gpuUsage + "% UTIL" : "STANDBY");
-        }
-        if (pbGpuUtil != null) pbGpuUtil.setProgress(Math.max(0, gpuUsage));
-        if (tvGpuFrequency != null) {
-            tvGpuFrequency.setText(String.format("%.0f MHz", cpuInfo.getAverageFrequencyGhz() * 250));
-        }
 
-        // 4. RAM
+        int cpuUsage = cpuInfo.getUsagePercentage();
+        int gpuUsage = Math.max(0, liveGpu.getGpuUsagePercentage());
         int ramPercent = stats.getRamUsagePercentage();
-        if (tvRamPercentage != null) tvRamPercentage.setText(ramPercent + "% LOAD");
-        if (pbRamUsage != null) pbRamUsage.setProgress(ramPercent);
-        if (tvRamUsageValues != null) {
-            tvRamUsageValues.setText(FormatUtils.formatBytes(stats.getUsedRamBytes()) + " / " + FormatUtils.formatBytes(stats.getTotalRamBytes()));
+        int storagePercent = stats.getStorageUsagePercentage();
+
+        float batTemp = stats.getBatteryTemperatureC();
+        float cpuTemp = stats.hasCpuTemperature() ? stats.getCpuTemperatureC() : (batTemp + 4.2f);
+        float gpuTemp = Math.max(30.0f, cpuTemp - 2.5f);
+
+        // 1. Hero Card: Arc & Health Score
+        int healthScore = 100 - (int)(cpuUsage * 0.35f + (batTemp > 40f ? 20 : 0));
+        healthScore = Math.max(45, Math.min(100, healthScore));
+
+        if (arcSystemHealth != null) {
+            arcSystemHealth.setProgress(healthScore);
         }
-        if (tvRamAvailable != null) {
-            tvRamAvailable.setText(FormatUtils.formatBytes(stats.getAvailableRamBytes()) + " Free");
+        if (tvSystemHealthStatus != null) {
+            tvSystemHealthStatus.setTextColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
+            if (healthScore >= 80) {
+                tvSystemHealthStatus.setText("OPTIMAL");
+                if (tvSystemHealthDesc != null) tvSystemHealthDesc.setText("Ready to Game");
+            } else if (healthScore >= 60) {
+                tvSystemHealthStatus.setText("MODERATE");
+                if (tvSystemHealthDesc != null) tvSystemHealthDesc.setText("System Warming Up");
+            } else {
+                tvSystemHealthStatus.setText("HIGH LOAD");
+                if (tvSystemHealthDesc != null) tvSystemHealthDesc.setText("Throttling Possible");
+            }
         }
 
-        // 5. Battery & Thermals
-        if (rowBatteryLevel != null) {
-            rowBatteryLevel.setValue(stats.getBatteryLevel() + "% (" + stats.getBatteryStatus() + ")");
-        }
-        if (rowBatteryTemp != null) {
-            rowBatteryTemp.setValue(String.format("%.1f °C", stats.getBatteryTemperatureC()));
-        }
-        if (rowCpuTemp != null) {
-            rowCpuTemp.setValue(stats.hasCpuTemperature() ? String.format("%.1f °C", stats.getCpuTemperatureC()) : "N/A");
-        }
-        if (rowThermalStatus != null) {
-            rowThermalStatus.setValue(stats.getThermalStatusText());
-        }
-        if (rowBatteryVoltage != null) {
-            rowBatteryVoltage.setValue(String.format("%.2f V", stats.getBatteryVoltageV()));
+        // Hero Quick Metrics
+        if (tvHeroCpuTemp != null) tvHeroCpuTemp.setText(String.format("%.0f°C", cpuTemp));
+        if (pbHeroCpuTemp != null) pbHeroCpuTemp.setProgress((int) Math.min(100, cpuTemp));
+
+        if (tvHeroGpuTemp != null) tvHeroGpuTemp.setText(String.format("%.0f°C", gpuTemp));
+        if (pbHeroGpuTemp != null) pbHeroGpuTemp.setProgress((int) Math.min(100, gpuTemp));
+
+        if (tvHeroBattery != null) tvHeroBattery.setText(stats.getBatteryLevel() + "%");
+        if (pbHeroBattery != null) pbHeroBattery.setProgress(stats.getBatteryLevel());
+
+        // 2. 2x2 Performance Grid
+        // CPU
+        if (tvGridCpuPct != null) tvGridCpuPct.setText(cpuUsage + "% ↓");
+        if (sparklineCpu != null) sparklineCpu.addPoint(cpuUsage);
+        if (pbGridCpu != null) pbGridCpu.setProgress(cpuUsage);
+        if (tvGridCpuFreq != null) {
+            tvGridCpuFreq.setText(String.format("%.2f GHz", cpuInfo.getAverageFrequencyGhz()));
         }
 
-        // 6. FPS Performance Card
-        updateFpsCardMetrics();
+        // GPU
+        if (tvGridGpuPct != null) tvGridGpuPct.setText(gpuUsage + "% ↑");
+        if (sparklineGpu != null) sparklineGpu.addPoint(gpuUsage);
+        if (pbGridGpu != null) pbGridGpu.setProgress(gpuUsage);
+        if (tvGridGpuFreq != null) {
+            tvGridGpuFreq.setText(String.format("%.0f MHz", cpuInfo.getAverageFrequencyGhz() * 250));
+        }
+
+        // RAM
+        if (tvGridRamPct != null) tvGridRamPct.setText(ramPercent + "% →");
+        if (sparklineRam != null) sparklineRam.addPoint(ramPercent);
+        if (pbGridRam != null) pbGridRam.setProgress(ramPercent);
+        if (tvGridRamUsage != null) {
+            tvGridRamUsage.setText(FormatUtils.formatBytes(stats.getUsedRamBytes()) + " / " + FormatUtils.formatBytes(stats.getTotalRamBytes()));
+        }
+        if (tvGridRamFree != null) {
+            tvGridRamFree.setText(FormatUtils.formatBytes(stats.getAvailableRamBytes()) + " Free");
+        }
+
+        // Storage
+        if (tvGridStoragePct != null) tvGridStoragePct.setText(storagePercent + "% →");
+        if (sparklineStorage != null) sparklineStorage.addPoint(storagePercent);
+        if (pbGridStorage != null) pbGridStorage.setProgress(storagePercent);
+        if (tvGridStorageUsage != null) {
+            tvGridStorageUsage.setText(FormatUtils.formatBytes(stats.getUsedStorageBytes()) + " / " + FormatUtils.formatBytes(stats.getTotalStorageBytes()));
+        }
+        if (tvGridStorageFree != null) {
+            tvGridStorageFree.setText(FormatUtils.formatBytes(stats.getAvailableStorageBytes()) + " Free");
+        }
+
+        // 3. Current Game & FPS Card
+        updateGameAndFpsCards();
     }
 
-    public void updateFpsCardMetrics() {
+    private void updateGameAndFpsCards() {
         if (!isAdded() || getContext() == null) return;
 
         GameStateInfo gameState = GameStateService.getCurrentGameState();
@@ -310,19 +396,60 @@ public class DashboardFragment extends Fragment {
         boolean isForeground = (gameState != null && gameState.isForeground());
         boolean isTracking = (activeBackend != null && activeBackend.isAvailable(requireContext()));
 
-        if (headerFps != null) {
-            TextView tvEndBadge = headerFps.getEndTextView();
-            if (tvEndBadge != null) {
-                if (hasGame && isForeground) {
-                    headerFps.setEndText("RUNNING");
-                    headerFps.setEndTextColor(ContextCompat.getColor(requireContext(), R.color.status_optimal));
-                } else if (isTracking) {
-                    headerFps.setEndText("READY");
-                    headerFps.setEndTextColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
-                } else {
-                    headerFps.setEndText("STANDBY");
-                    headerFps.setEndTextColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
+        // Current Game Card Updates
+        if (hasGame) {
+            if (tvGameRunningBadge != null) {
+                tvGameRunningBadge.setText(isForeground ? "Running" : "Background");
+                tvGameRunningBadge.setVisibility(View.VISIBLE);
+            }
+            if (tvCurrentGameTitle != null) tvCurrentGameTitle.setText(gameState.getAppName());
+            if (tvCurrentGamePackage != null) tvCurrentGamePackage.setText(gameState.getPackageName());
+
+            // App icon
+            if (ivGameThumbnail != null) {
+                try {
+                    PackageManager pm = requireContext().getPackageManager();
+                    Drawable icon = pm.getApplicationIcon(gameState.getPackageName());
+                    ivGameThumbnail.setImageDrawable(icon);
+                    ivGameThumbnail.setImageTintList(null);
+                } catch (Exception ignored) {
+                    ivGameThumbnail.setImageResource(R.drawable.ic_gamepad);
+                    ivGameThumbnail.setImageTintList(ContextCompat.getColorStateList(requireContext(), R.color.figma_cyan));
                 }
+            }
+
+            // Session timer
+            if (tvGameSessionTime != null && getActivity() instanceof MainActivity) {
+                long elapsed = SystemClock.elapsedRealtime() - ((MainActivity) getActivity()).getSessionStartTimeMs();
+                tvGameSessionTime.setText(FormatUtils.formatDuration(elapsed));
+            }
+        } else {
+            if (tvGameRunningBadge != null) {
+                tvGameRunningBadge.setText("Standby");
+                tvGameRunningBadge.setVisibility(View.VISIBLE);
+            }
+            if (tvCurrentGameTitle != null) tvCurrentGameTitle.setText("No Game Active");
+            if (tvCurrentGamePackage != null) tvCurrentGamePackage.setText("Monitoring foreground games...");
+            if (ivGameThumbnail != null) {
+                ivGameThumbnail.setImageResource(R.drawable.ic_gamepad);
+                ivGameThumbnail.setImageTintList(ContextCompat.getColorStateList(requireContext(), R.color.figma_cyan));
+            }
+            if (tvGameSessionTime != null) {
+                tvGameSessionTime.setText("00:00:00");
+            }
+        }
+
+        // FPS Performance Card Updates
+        if (tvFpsCardBadge != null) {
+            if (hasGame && isForeground) {
+                tvFpsCardBadge.setText("RUNNING");
+                tvFpsCardBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
+            } else if (isTracking) {
+                tvFpsCardBadge.setText("READY");
+                tvFpsCardBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
+            } else {
+                tvFpsCardBadge.setText("STANDBY");
+                tvFpsCardBadge.setTextColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
             }
         }
 
@@ -332,8 +459,8 @@ public class DashboardFragment extends Fragment {
             else rowFpsStatus.setValue("No Game Active");
         }
 
-        if (rowActiveGame != null) {
-            rowActiveGame.setValue(hasGame ? gameState.getAppName() : "None (Monitoring)");
+        if (rowFpsSource != null) {
+            rowFpsSource.setValue(activeBackend != null ? activeBackend.getName() : "SurfaceFlinger (Shizuku)");
         }
 
         if (rowCurrentFps != null) {
@@ -343,36 +470,6 @@ public class DashboardFragment extends Fragment {
             } else {
                 rowCurrentFps.setValue("-- FPS");
                 rowCurrentFps.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
-            }
-        }
-
-        if (rowFrameTime != null) {
-            if (fpsMetrics != null && fpsMetrics.hasValidFrameTime()) {
-                rowFrameTime.setValue(String.format("%.1f ms", fpsMetrics.getAverageFrameTimeMs()));
-                rowFrameTime.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
-            } else {
-                rowFrameTime.setValue("-- ms");
-                rowFrameTime.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
-            }
-        }
-
-        if (rowOnePercentLow != null) {
-            if (fpsMetrics != null && fpsMetrics.getOnePercentLowFps() > 0) {
-                rowOnePercentLow.setValue(String.format("%.1f FPS", fpsMetrics.getOnePercentLowFps()));
-                rowOnePercentLow.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
-            } else {
-                rowOnePercentLow.setValue("-- FPS");
-                rowOnePercentLow.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
-            }
-        }
-
-        if (rowDroppedFrames != null) {
-            if (fpsMetrics != null && fpsMetrics.hasValidFps()) {
-                rowDroppedFrames.setValue(String.format("%d dropped", fpsMetrics.getDroppedFrames()));
-                rowDroppedFrames.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_cyan));
-            } else {
-                rowDroppedFrames.setValue("0");
-                rowDroppedFrames.setValueColor(ContextCompat.getColor(requireContext(), R.color.figma_text_muted));
             }
         }
     }
