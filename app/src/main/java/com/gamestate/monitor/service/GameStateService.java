@@ -1,14 +1,25 @@
 package com.gamestate.monitor.service;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ServiceInfo;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
+
+import com.gamestate.monitor.MainActivity;
+import com.gamestate.monitor.R;
 import com.gamestate.monitor.fps.FpsBackend;
 import com.gamestate.monitor.fps.FpsBackendManager;
 import com.gamestate.monitor.fps.FpsDataCallback;
@@ -30,10 +41,14 @@ import com.gamestate.monitor.fps.GameStateInfo;
  *    - "Waiting for supported FPS backend"
  *    - "FPS Monitoring Active"
  * 4. Dispatches zero-delay state changes to the UI layer and Floating HUD.
+ * 5. Promotes to a protected Foreground Service with notification during active benchmark recording
+ *    so Android OS never kills the session even when the floating HUD is OFF.
  */
 public class GameStateService extends Service implements FpsDataCallback {
 
     private static final String TAG = "GameStateService";
+    private static final String CHANNEL_ID_BENCHMARK = "channel_game_benchmark";
+    private static final int NOTIFICATION_ID_BENCHMARK = 2002;
 
     public static final String ACTION_GAME_STATE_UPDATED = "com.gamestate.monitor.ACTION_GAME_STATE_UPDATED";
     public static final String EXTRA_MONITOR_STATE = "monitor_state";
@@ -63,6 +78,8 @@ public class GameStateService extends Service implements FpsDataCallback {
     private com.gamestate.monitor.util.DeviceStatsManager statsManager;
     private com.gamestate.monitor.util.CpuMonitor cpuMonitor;
     private com.gamestate.monitor.util.GpuMonitor gpuMonitor;
+
+    private boolean isForegroundPromoted = false;
 
     public class LocalBinder extends Binder {
         public GameStateService getService() {
@@ -103,15 +120,22 @@ public class GameStateService extends Service implements FpsDataCallback {
                     com.gamestate.monitor.model.PerformanceStats stats = statsManager != null ? statsManager.getPerformanceStats() : null;
                     analyticsTracker.startRecording(currentGameState, currentMetrics, stats);
                 }
+                promoteToForegroundNotification(currentGameState != null ? currentGameState.getAppName() : null);
             } else if (ACTION_STOP_RECORDING.equals(action)) {
                 if (analyticsTracker != null) {
                     analyticsTracker.stopRecording();
                 }
+                demoteFromForeground();
             }
         }
+
+        if (analyticsTracker != null && analyticsTracker.isRecording()) {
+            promoteToForegroundNotification(currentGameState != null ? currentGameState.getAppName() : null);
+        }
+
         loopHandler.removeCallbacks(scanRunnable);
         loopHandler.post(scanRunnable);
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     private final Runnable scanRunnable = new Runnable() {
@@ -125,6 +149,7 @@ public class GameStateService extends Service implements FpsDataCallback {
             if (!appVisible && !overlayActive && !isRecording) {
                 // Zero active clients and no recording in progress -> completely kill service!
                 Log.d(TAG, "Zero active clients and no recording in progress. Shutting down GameStateService to preserve battery.");
+                demoteFromForeground();
                 stopSelf();
                 return;
             }
@@ -186,9 +211,89 @@ public class GameStateService extends Service implements FpsDataCallback {
             com.gamestate.monitor.model.CpuInfo cpu = cpuMonitor != null ? cpuMonitor.getCpuInfo() : null;
             com.gamestate.monitor.model.GpuInfo gpu = gpuMonitor != null ? gpuMonitor.sampleGpuInfo() : null;
             analyticsTracker.onTick(detectedGame, currentMetrics, stats, cpu, gpu);
+            promoteToForegroundNotification(detectedGame.hasGame() ? detectedGame.getAppName() : null);
+        } else if (isForegroundPromoted) {
+            demoteFromForeground();
         }
 
         broadcastStateUpdate(detectedGame, newState);
+    }
+
+    /**
+     * Promotes GameStateService to a protected Foreground Service while recording a benchmark.
+     */
+    private void promoteToForegroundNotification(String gameName) {
+        createNotificationChannel();
+
+        Intent openAppIntent = new Intent(this, MainActivity.class);
+        openAppIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, openAppIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        Intent stopRecordingIntent = new Intent(this, GameStateService.class);
+        stopRecordingIntent.setAction(ACTION_STOP_RECORDING);
+        PendingIntent stopPendingIntent = PendingIntent.getService(
+                this, 1, stopRecordingIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        String title = "Gaming Benchmark Recording";
+        String contentText = (gameName != null && !gameName.isEmpty() && !"Gaming Session".equals(gameName) && !"Waiting for Game Launch".equals(gameName))
+                ? "Profiling " + gameName + " in real-time..."
+                : "Profiling game performance & thermals...";
+
+        Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID_BENCHMARK)
+                .setContentTitle(title)
+                .setContentText(contentText)
+                .setSmallIcon(R.drawable.ic_device)
+                .setColor(ContextCompat.getColor(this, R.color.figma_cyan))
+                .setContentIntent(pendingIntent)
+                .addAction(R.drawable.ic_device, "Stop Recording", stopPendingIntent)
+                .setOngoing(true)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setCategory(NotificationCompat.CATEGORY_SERVICE)
+                .build();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIFICATION_ID_BENCHMARK, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE);
+            } else {
+                startForeground(NOTIFICATION_ID_BENCHMARK, notification);
+            }
+            isForegroundPromoted = true;
+        } catch (Exception e) {
+            Log.e(TAG, "Error promoting GameStateService to foreground: " + e.getMessage());
+        }
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID_BENCHMARK,
+                    "GameState Benchmark Session",
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription("Persistent status while recording game benchmark telemetry");
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(channel);
+            }
+        }
+    }
+
+    private void demoteFromForeground() {
+        if (isForegroundPromoted) {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    stopForeground(STOP_FOREGROUND_REMOVE);
+                } else {
+                    stopForeground(true);
+                }
+            } catch (Exception ignored) {}
+            isForegroundPromoted = false;
+        }
     }
 
     private void broadcastStateUpdate(GameStateInfo game, FpsMonitorState state) {
@@ -218,6 +323,7 @@ public class GameStateService extends Service implements FpsDataCallback {
         super.onDestroy();
         isServiceRunning = false;
         loopHandler.removeCallbacks(scanRunnable);
+        demoteFromForeground();
         if (analyticsTracker != null) {
             analyticsTracker.finalizeActiveSession();
         }
@@ -256,3 +362,4 @@ public class GameStateService extends Service implements FpsDataCallback {
         return backendManager;
     }
 }
+

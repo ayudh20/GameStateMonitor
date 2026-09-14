@@ -333,8 +333,18 @@ public class OverlayService extends Service {
         btnOverlayRecord.setOnClickListener(v -> {
             SessionAnalyticsTracker tracker = SessionAnalyticsTracker.getInstance(this);
             if (tracker.isRecording()) {
+                try {
+                    Intent stopIntent = new Intent(this, GameStateService.class);
+                    stopIntent.setAction(GameStateService.ACTION_STOP_RECORDING);
+                    startService(stopIntent);
+                } catch (Exception ignored) {}
                 tracker.stopRecording();
             } else {
+                try {
+                    Intent startIntent = new Intent(this, GameStateService.class);
+                    startIntent.setAction(GameStateService.ACTION_START_RECORDING);
+                    ContextCompat.startForegroundService(this, startIntent);
+                } catch (Exception ignored) {}
                 PerformanceStats stats = statsManager != null ? statsManager.getPerformanceStats() : null;
                 tracker.startRecording(GameStateService.getCurrentGameState(), GameStateService.getCurrentMetrics(), stats);
             }

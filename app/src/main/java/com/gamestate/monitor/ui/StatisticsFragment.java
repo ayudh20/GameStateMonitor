@@ -287,6 +287,11 @@ public class StatisticsFragment extends Fragment {
             btnToggleRecording.setOnClickListener(v -> {
                 if (analyticsTracker == null) return;
                 if (analyticsTracker.isRecording()) {
+                    try {
+                        Intent stopIntent = new Intent(requireContext(), GameStateService.class);
+                        stopIntent.setAction(GameStateService.ACTION_STOP_RECORDING);
+                        requireContext().startService(stopIntent);
+                    } catch (Exception ignored) {}
                     analyticsTracker.stopRecording();
                     Toast.makeText(requireContext(), "Benchmark Session Saved!", Toast.LENGTH_SHORT).show();
                     GameSession last = analyticsTracker.getLastCompletedSession();
@@ -297,8 +302,9 @@ public class StatisticsFragment extends Fragment {
                     }
                 } else {
                     try {
-                        Intent gameServiceIntent = new Intent(requireContext(), GameStateService.class);
-                        requireContext().startService(gameServiceIntent);
+                        Intent startIntent = new Intent(requireContext(), GameStateService.class);
+                        startIntent.setAction(GameStateService.ACTION_START_RECORDING);
+                        ContextCompat.startForegroundService(requireContext(), startIntent);
                     } catch (Exception ignored) {}
 
                     DeviceStatsManager statsManager = new DeviceStatsManager(requireContext());
