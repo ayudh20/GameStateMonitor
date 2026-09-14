@@ -94,6 +94,7 @@ public class OverlayService extends Service {
     private TextView tvOverlayBattery;
     private TextView tvOverlayRamFull;
     private TextView tvOverlayStorage;
+    private TextView btnOverlayRecord;
     private TextView btnOverlayStop;
 
     // Hardware Monitors
@@ -145,6 +146,12 @@ public class OverlayService extends Service {
         gpuMonitor = new GpuMonitor();
         cachedGpuInfo = gpuMonitor.getGpuInfo();
 
+        // Ensure GameStateService is running while overlay is active
+        try {
+            Intent gameServiceIntent = new Intent(this, GameStateService.class);
+            startService(gameServiceIntent);
+        } catch (Exception ignored) {}
+
         // 1. Promote to Foreground Service with required notification
         startInForeground();
 
@@ -157,11 +164,12 @@ public class OverlayService extends Service {
         // 4. Start real-time monitoring loop
         updateHandler.post(updateRunnable);
 
-        // 5. Register for instant game state and config updates
+        // 5. Register for instant game state, config, and recording updates
         try {
             IntentFilter filter = new IntentFilter();
             filter.addAction(GameStateService.ACTION_GAME_STATE_UPDATED);
             filter.addAction(com.gamestate.monitor.model.OverlayPreferences.ACTION_OVERLAY_CONFIG_CHANGED);
+            filter.addAction(SessionAnalyticsTracker.ACTION_RECORDING_STATE_CHANGED);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 registerReceiver(stateAndConfigReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
             } else {
@@ -179,6 +187,8 @@ public class OverlayService extends Service {
                 updateHudMetrics();
             } else if (com.gamestate.monitor.model.OverlayPreferences.ACTION_OVERLAY_CONFIG_CHANGED.equals(intent.getAction())) {
                 applyPreferencesStyling();
+            } else if (SessionAnalyticsTracker.ACTION_RECORDING_STATE_CHANGED.equals(intent.getAction())) {
+                updateRecordButtonState();
             }
         }
     };
@@ -221,7 +231,9 @@ public class OverlayService extends Service {
         tvOverlayBattery = overlayView.findViewById(R.id.tvOverlayBattery);
         tvOverlayRamFull = overlayView.findViewById(R.id.tvOverlayRamFull);
         tvOverlayStorage = overlayView.findViewById(R.id.tvOverlayStorage);
+        btnOverlayRecord = overlayView.findViewById(R.id.btnOverlayRecord);
         btnOverlayStop = overlayView.findViewById(R.id.btnOverlayStop);
+        updateRecordButtonState();
 
         // Set initial device info in expanded panel
         if (cachedDeviceInfo != null) {
@@ -316,8 +328,32 @@ public class OverlayService extends Service {
     }
 
     private void setupClickListeners() {
-        ivOverlayClose.setOnClickListener(v -> toggleExpandedPanel());
+        if (ivOverlayClose != null) ivOverlayClose.setOnClickListener(v -> toggleExpandedPanel());
+        if (ivOverlayToggle != null) ivOverlayToggle.setOnClickListener(v -> toggleExpandedPanel());
+        btnOverlayRecord.setOnClickListener(v -> {
+            SessionAnalyticsTracker tracker = SessionAnalyticsTracker.getInstance(this);
+            if (tracker.isRecording()) {
+                tracker.stopRecording();
+            } else {
+                PerformanceStats stats = statsManager != null ? statsManager.getPerformanceStats() : null;
+                tracker.startRecording(GameStateService.getCurrentGameState(), GameStateService.getCurrentMetrics(), stats);
+            }
+            updateRecordButtonState();
+        });
         btnOverlayStop.setOnClickListener(v -> stopSelf());
+    }
+
+    private void updateRecordButtonState() {
+        if (btnOverlayRecord == null) return;
+        SessionAnalyticsTracker tracker = SessionAnalyticsTracker.getInstance(this);
+        boolean isRecording = tracker.isRecording();
+        if (isRecording) {
+            btnOverlayRecord.setText("■ Stop & Save Recording");
+            btnOverlayRecord.setTextColor(ContextCompat.getColor(this, R.color.status_high_load));
+        } else {
+            btnOverlayRecord.setText("● Record Gaming Session");
+            btnOverlayRecord.setTextColor(ContextCompat.getColor(this, R.color.secondary_cyan));
+        }
     }
 
     private void toggleExpandedPanel() {
@@ -506,8 +542,21 @@ public class OverlayService extends Service {
         isRunning = false;
         sendOverlayStateBroadcast(false);
 
-         // Stop updates
-         updateHandler.removeCallbacks(updateRunnable);
+        // Finalize recording if active
+        if (SessionAnalyticsTracker.getInstance(this).isRecording()) {
+            SessionAnalyticsTracker.getInstance(this).stopRecording();
+        }
+
+        // Ultra-light: If app is not in foreground, stop GameStateService completely
+        if (!com.gamestate.monitor.MainActivity.isAppInForeground) {
+            try {
+                Intent gameServiceIntent = new Intent(this, GameStateService.class);
+                stopService(gameServiceIntent);
+            } catch (Exception ignored) {}
+        }
+
+        // Stop updates
+        updateHandler.removeCallbacks(updateRunnable);
 
          // Unregister receivers
          try {

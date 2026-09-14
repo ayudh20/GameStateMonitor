@@ -223,12 +223,27 @@
             android:textSize="11sp"
             tools:text="Storage Free: 54.2 GB" />
 
+        <!-- Quick Record Session Action Button -->
+        <TextView
+            android:id="@+id/btnOverlayRecord"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_inner_container"
+            android:gravity="center"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:text="● Record Gaming Session"
+            android:textColor="@color/secondary_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
         <!-- Bottom Action: Stop Service -->
         <TextView
             android:id="@+id/btnOverlayStop"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:background="@drawable/bg_inner_container"
             android:gravity="center"
             android:paddingTop="6dp"

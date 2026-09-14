@@ -51,7 +51,12 @@
         <service
             android:name=".service.GameStateService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Game session performance benchmark tracking" />
+        </service>
 
         <!-- Shizuku Provider for wireless on-device ADB IPC -->
         <provider

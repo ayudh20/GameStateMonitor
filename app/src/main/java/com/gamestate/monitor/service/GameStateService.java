@@ -40,6 +40,9 @@ public class GameStateService extends Service implements FpsDataCallback {
     public static final String EXTRA_PACKAGE_NAME = "package_name";
     public static final String EXTRA_APP_NAME = "app_name";
 
+    public static final String ACTION_START_RECORDING = "com.gamestate.monitor.ACTION_START_RECORDING";
+    public static final String ACTION_STOP_RECORDING = "com.gamestate.monitor.ACTION_STOP_RECORDING";
+
     // Singleton state snapshot for immediate synchronous UI polling
     private static volatile GameStateInfo currentGameState = GameStateInfo.none();
     private static volatile FpsMonitorState currentMonitorState = FpsMonitorState.NO_GAME_DETECTED;
@@ -55,6 +58,11 @@ public class GameStateService extends Service implements FpsDataCallback {
     private FpsBackendManager backendManager;
     private FpsBackend activeBackend;
     private String monitoredPackage = null;
+
+    private SessionAnalyticsTracker analyticsTracker;
+    private com.gamestate.monitor.util.DeviceStatsManager statsManager;
+    private com.gamestate.monitor.util.CpuMonitor cpuMonitor;
+    private com.gamestate.monitor.util.GpuMonitor gpuMonitor;
 
     public class LocalBinder extends Binder {
         public GameStateService getService() {
@@ -76,18 +84,51 @@ public class GameStateService extends Service implements FpsDataCallback {
         activeBackend = backendManager.getActiveBackend();
         currentActiveBackend = activeBackend;
 
+        analyticsTracker = SessionAnalyticsTracker.getInstance(this);
+        statsManager = new com.gamestate.monitor.util.DeviceStatsManager(this);
+        cpuMonitor = new com.gamestate.monitor.util.CpuMonitor();
+        gpuMonitor = new com.gamestate.monitor.util.GpuMonitor();
+
         // Start scanning cycle
+        loopHandler.removeCallbacks(scanRunnable);
         loopHandler.post(scanRunnable);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return START_STICKY;
+        if (intent != null) {
+            String action = intent.getAction();
+            if (ACTION_START_RECORDING.equals(action)) {
+                if (analyticsTracker != null) {
+                    com.gamestate.monitor.model.PerformanceStats stats = statsManager != null ? statsManager.getPerformanceStats() : null;
+                    analyticsTracker.startRecording(currentGameState, currentMetrics, stats);
+                }
+            } else if (ACTION_STOP_RECORDING.equals(action)) {
+                if (analyticsTracker != null) {
+                    analyticsTracker.stopRecording();
+                }
+            }
+        }
+        loopHandler.removeCallbacks(scanRunnable);
+        loopHandler.post(scanRunnable);
+        return START_NOT_STICKY;
     }
 
     private final Runnable scanRunnable = new Runnable() {
         @Override
         public void run() {
+            // Ultra-light check: verify if any client or recording is active
+            boolean appVisible = com.gamestate.monitor.MainActivity.isAppInForeground;
+            boolean overlayActive = OverlayService.isRunning;
+            boolean isRecording = (analyticsTracker != null && analyticsTracker.isRecording());
+
+            if (!appVisible && !overlayActive && !isRecording) {
+                // Zero active clients and no recording in progress -> completely kill service!
+                Log.d(TAG, "Zero active clients and no recording in progress. Shutting down GameStateService to preserve battery.");
+                stopSelf();
+                return;
+            }
+
             evaluateGameState();
             loopHandler.postDelayed(this, SCAN_INTERVAL_MS);
         }
@@ -138,6 +179,15 @@ public class GameStateService extends Service implements FpsDataCallback {
         }
 
         currentMonitorState = newState;
+
+        // Feed metrics to SessionAnalyticsTracker strictly when recording is active
+        if (analyticsTracker != null && analyticsTracker.isRecording()) {
+            com.gamestate.monitor.model.PerformanceStats stats = statsManager != null ? statsManager.getPerformanceStats() : null;
+            com.gamestate.monitor.model.CpuInfo cpu = cpuMonitor != null ? cpuMonitor.getCpuInfo() : null;
+            com.gamestate.monitor.model.GpuInfo gpu = gpuMonitor != null ? gpuMonitor.sampleGpuInfo() : null;
+            analyticsTracker.onTick(detectedGame, currentMetrics, stats, cpu, gpu);
+        }
+
         broadcastStateUpdate(detectedGame, newState);
     }
 
@@ -168,6 +218,9 @@ public class GameStateService extends Service implements FpsDataCallback {
         super.onDestroy();
         isServiceRunning = false;
         loopHandler.removeCallbacks(scanRunnable);
+        if (analyticsTracker != null) {
+            analyticsTracker.finalizeActiveSession();
+        }
         if (activeBackend != null && activeBackend.isMonitoring()) {
             activeBackend.stopMonitoring();
         }

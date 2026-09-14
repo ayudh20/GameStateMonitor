@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:background="@drawable/bg_pill_metric"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:padding="12dp">
+
+    <!-- Game Icon Squircle -->
+    <FrameLayout
+        android:layout_width="38dp"
+        android:layout_height="38dp"
+        android:background="@drawable/bg_chip_figma_inactive">
+
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_gamepad"
+            app:tint="@color/figma_cyan" />
+    </FrameLayout>
+
+    <!-- Details Column: Game & Duration -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvItemHistoryGame"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="Battlegrounds Mobile India"
+            android:textColor="@color/white"
+            android:textSize="13sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvItemHistoryDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:fontFamily="monospace"
+            android:text="01h 12m 45s"
+            android:textColor="@color/figma_text_muted"
+            android:textSize="10sp" />
+    </LinearLayout>
+
+    <!-- Avg FPS -->
+    <TextView
+        android:id="@+id/tvItemHistoryAvgFps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:fontFamily="monospace"
+        android:text="59 FPS"
+        android:textColor="@color/figma_cyan"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <!-- Grade Badge -->
+    <TextView
+        android:id="@+id/tvItemHistoryGrade"
+        android:layout_width="26dp"
+        android:layout_height="26dp"
+        android:background="@drawable/bg_grade_badge"
+        android:gravity="center"
+        android:text="A+"
+        android:textColor="@color/figma_cyan"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <!-- Delete Session Button -->
+    <FrameLayout
+        android:id="@+id/btnItemDeleteSession"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginStart="8dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:clickable="true"
+        android:focusable="true"
+        android:contentDescription="Delete session">
+
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_trash"
+            app:tint="@color/figma_text_muted" />
+    </FrameLayout>
+
+</LinearLayout>

@@ -34,6 +34,7 @@ import androidx.fragment.app.FragmentManager;
 import com.gamestate.monitor.model.OverlayPreferences;
 import com.gamestate.monitor.service.GameStateService;
 import com.gamestate.monitor.service.OverlayService;
+import com.gamestate.monitor.service.SessionAnalyticsTracker;
 import com.gamestate.monitor.shizuku.ShizukuManager;
 import com.gamestate.monitor.ui.DashboardFragment;
 import com.gamestate.monitor.ui.DiagnosticsFragment;
@@ -46,7 +47,7 @@ import rikka.shizuku.Shizuku;
 /**
  * MainActivity
  * ------------
- * Modern gaming-style container featuring a floating dark glassmorphism bottom dock,
+ * Primary entry point featuring the Modern Gaming Bottom Dock with an
  * elevated center glowing overlay control, and 5 responsive tabs:
  * 1. Dashboard (Clean hardware diagnostics)
  * 2. Diagnostics (Low-level kernel frequencies & thermal zones)
@@ -57,6 +58,8 @@ import rikka.shizuku.Shizuku;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
+
+    public static volatile boolean isAppInForeground = false;
 
     public enum Tab {
         DASHBOARD,
@@ -176,12 +179,6 @@ public class MainActivity extends AppCompatActivity {
                 requestNotificationPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS);
             }
         }
-
-        // Start background game detection service
-        Intent gameServiceIntent = new Intent(this, GameStateService.class);
-        try {
-            startService(gameServiceIntent);
-        } catch (Exception ignored) {}
 
         // Bind and setup dock
         bindDockViews();
@@ -355,7 +352,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        isAppInForeground = true;
         updateCenterButtonVisuals();
+
+        // Start GameStateService so in-app dashboards update in real-time
+        try {
+            Intent gameServiceIntent = new Intent(this, GameStateService.class);
+            startService(gameServiceIntent);
+        } catch (Exception ignored) {}
+
         try {
             IntentFilter filter = new IntentFilter(OverlayService.ACTION_OVERLAY_STATE_CHANGED);
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -372,6 +377,21 @@ public class MainActivity extends AppCompatActivity {
         try {
             unregisterReceiver(overlayStateReceiver);
         } catch (Exception ignored) {}
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        isAppInForeground = false;
+        // Ultra-light: If neither Overlay nor Session Recording is active, KILL GameStateService!
+        boolean overlayRunning = OverlayService.isRunning;
+        boolean isRecording = SessionAnalyticsTracker.getInstance(this).isRecording();
+        if (!overlayRunning && !isRecording) {
+            try {
+                Intent gameServiceIntent = new Intent(this, GameStateService.class);
+                stopService(gameServiceIntent);
+            } catch (Exception ignored) {}
+        }
     }
 
     @Override
