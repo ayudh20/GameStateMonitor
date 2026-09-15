@@ -46,6 +46,9 @@ public class SessionAnalyticsTracker {
     private final List<Integer> sessionCpuBuffer = new ArrayList<>();
     private final List<Integer> sessionGpuBuffer = new ArrayList<>();
 
+    public static final float GAMEPLAY_FPS_THRESHOLD = 5.0f;
+    private boolean hasSampledAnyFps = false;
+
     private int totalFramesSampled = 0;
     private int smoothFramesCount = 0;
     private int minorStuttersCount = 0;
@@ -162,6 +165,10 @@ public class SessionAnalyticsTracker {
         activeSession.setAvgTempC(currentTemp);
         activeSession.setPeakTempC(currentTemp);
 
+        hasSampledAnyFps = false;
+        activeSession.setGameplayMinFps(0.0f);
+        activeSession.setAbsoluteMinFps(0.0f);
+
         sessionFpsBuffer.clear();
         sessionTempBuffer.clear();
         sessionCpuBuffer.clear();
@@ -184,33 +191,41 @@ public class SessionAnalyticsTracker {
         if (fpsMetrics != null && fpsMetrics.hasValidFps()) {
             float fps = fpsMetrics.getCurrentFps();
 
-            // Benchmark integrity: Only aggregate active rendering frames.
-            // Screen switches, static screens, and loading screen pauses (0.0 FPS) do not
-            // reflect in-game performance and must not distort min FPS or percentile floors.
-            if (fps > 0.0f) {
+            // Track Absolute Min FPS across all samples (including loading screens / 0-4 FPS)
+            if (!hasSampledAnyFps) {
+                activeSession.setAbsoluteMinFps(fps);
+                hasSampledAnyFps = true;
+            } else if (fps < activeSession.getAbsoluteMinFps()) {
+                activeSession.setAbsoluteMinFps(fps);
+            }
+
+            // Gameplay FPS Filtering:
+            // Samples < 5.0 FPS are classified as loading screens, app startup, match loading,
+            // returning to lobby, or background state. Exclude them from benchmark gameplay calculations.
+            if (fps >= GAMEPLAY_FPS_THRESHOLD) {
                 sessionFpsBuffer.add(fps);
 
-                // Min / Max (Active gameplay)
-                if (activeSession.getMinFps() <= 0.0f || fps < activeSession.getMinFps()) {
-                    activeSession.setMinFps(fps);
+                // Gameplay Min / Max (Active gameplay)
+                if (activeSession.getGameplayMinFps() <= 0.0f || fps < activeSession.getGameplayMinFps()) {
+                    activeSession.setGameplayMinFps(fps);
                 }
                 if (fps > activeSession.getMaxFps()) {
                     activeSession.setMaxFps(fps);
                 }
 
-                // Average
+                // Average Gameplay FPS
                 float sum = 0f;
                 for (Float f : sessionFpsBuffer) sum += f;
                 float avg = sum / sessionFpsBuffer.size();
                 activeSession.setAvgFps(avg);
 
-                // Variance
+                // Gameplay Variance
                 float varSum = 0f;
                 for (Float f : sessionFpsBuffer) varSum += (f - avg) * (f - avg);
                 float variance = varSum / sessionFpsBuffer.size();
                 activeSession.setFpsVariance(variance);
 
-                // 1% Low and 0.1% Low using continuous percentile rank
+                // 1% Low and 0.1% Low (Calculated only from valid gameplay samples)
                 if (sessionFpsBuffer.size() >= 5) {
                     List<Float> sorted = new ArrayList<>(sessionFpsBuffer);
                     Collections.sort(sorted);
@@ -233,17 +248,18 @@ public class SessionAnalyticsTracker {
                     activeSession.setOnePercentLowFps(Math.round(onePctLow * 10.0f) / 10.0f);
                     activeSession.setPointOnePercentLowFps(Math.round(pointOnePctLow * 10.0f) / 10.0f);
                 } else {
-                    float fallback1Pct = fpsMetrics.hasValidOnePercentLow() && fpsMetrics.getOnePercentLowFps() > 0.0f
-                            ? fpsMetrics.getOnePercentLowFps() : Math.max(1.0f, fps - 4.0f);
+                    float fallback1Pct = fpsMetrics.hasValidOnePercentLow() && fpsMetrics.getOnePercentLowFps() >= GAMEPLAY_FPS_THRESHOLD
+                            ? fpsMetrics.getOnePercentLowFps() : Math.max(GAMEPLAY_FPS_THRESHOLD, fps - 4.0f);
                     activeSession.setOnePercentLowFps(Math.round(fallback1Pct * 10.0f) / 10.0f);
-                    activeSession.setPointOnePercentLowFps(Math.max(1.0f, Math.round((fallback1Pct - 3.0f) * 10.0f) / 10.0f));
+                    activeSession.setPointOnePercentLowFps(Math.max(GAMEPLAY_FPS_THRESHOLD, Math.round((fallback1Pct - 3.0f) * 10.0f) / 10.0f));
                 }
 
-                // Dropped Frames & Stutters
+                // Dropped Frames & Stutters (Only track during active gameplay)
                 activeSession.setDroppedFrames(fpsMetrics.getDroppedFrames());
                 activeSession.setStutterEvents(fpsMetrics.getJankCount());
 
-                // Stability Score: % of active samples within 10% of target
+                // Stability Score: % of active gameplay samples within 10% of target
+                // Stable gameplay = High score; Loading screens = No penalty!
                 float targetHz = activeSession.getTargetRefreshRate();
                 if (targetHz > 0) {
                     int stableCount = 0;
@@ -254,7 +270,7 @@ public class SessionAnalyticsTracker {
                     activeSession.setStabilityScorePercent(Math.min(100f, stability));
                 }
 
-                // Frame time classification
+                // Frame time classification (Only during active gameplay)
                 float frameTimeMs = fpsMetrics.hasValidFrameTime() ? fpsMetrics.getAverageFrameTimeMs() : (1000f / fps);
                 totalFramesSampled++;
                 if (frameTimeMs < 16.7f) {

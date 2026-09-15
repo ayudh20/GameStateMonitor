@@ -28,7 +28,9 @@ public class GameSession implements Serializable {
     // FPS Benchmark Metrics
     private float avgFps;
     private float maxFps;
-    private float minFps;
+    private float minFps; // Legacy alias for gameplayMinFps
+    private float gameplayMinFps;
+    private float absoluteMinFps;
     private float onePercentLowFps;
     private float pointOnePercentLowFps;
     private float fpsVariance;
@@ -128,8 +130,20 @@ public class GameSession implements Serializable {
     public float getMaxFps() { return maxFps; }
     public void setMaxFps(float maxFps) { this.maxFps = maxFps; }
 
-    public float getMinFps() { return minFps; }
-    public void setMinFps(float minFps) { this.minFps = minFps; }
+    public float getMinFps() { return gameplayMinFps > 0.0f ? gameplayMinFps : minFps; }
+    public void setMinFps(float minFps) {
+        this.minFps = minFps;
+        if (this.gameplayMinFps <= 0.0f) this.gameplayMinFps = minFps;
+    }
+
+    public float getGameplayMinFps() { return gameplayMinFps > 0.0f ? gameplayMinFps : minFps; }
+    public void setGameplayMinFps(float gameplayMinFps) {
+        this.gameplayMinFps = gameplayMinFps;
+        this.minFps = gameplayMinFps;
+    }
+
+    public float getAbsoluteMinFps() { return absoluteMinFps; }
+    public void setAbsoluteMinFps(float absoluteMinFps) { this.absoluteMinFps = absoluteMinFps; }
 
     public float getOnePercentLowFps() { return onePercentLowFps; }
     public void setOnePercentLowFps(float onePercentLowFps) { this.onePercentLowFps = onePercentLowFps; }
@@ -242,7 +256,9 @@ public class GameSession implements Serializable {
 
             json.put("avgFps", (double) avgFps);
             json.put("maxFps", (double) maxFps);
-            json.put("minFps", (double) minFps);
+            json.put("minFps", (double) getGameplayMinFps());
+            json.put("gameplayMinFps", (double) getGameplayMinFps());
+            json.put("absoluteMinFps", (double) absoluteMinFps);
             json.put("onePercentLowFps", (double) onePercentLowFps);
             json.put("pointOnePercentLowFps", (double) pointOnePercentLowFps);
             json.put("fpsVariance", (double) fpsVariance);
@@ -313,7 +329,9 @@ public class GameSession implements Serializable {
 
             s.setAvgFps((float) json.optDouble("avgFps", 0.0));
             s.setMaxFps((float) json.optDouble("maxFps", 0.0));
-            s.setMinFps((float) json.optDouble("minFps", 0.0));
+            float loadedMin = (float) json.optDouble("minFps", 0.0);
+            s.setGameplayMinFps((float) json.optDouble("gameplayMinFps", loadedMin));
+            s.setAbsoluteMinFps((float) json.optDouble("absoluteMinFps", 0.0));
             s.setOnePercentLowFps((float) json.optDouble("onePercentLowFps", 0.0));
             s.setPointOnePercentLowFps((float) json.optDouble("pointOnePercentLowFps", 0.0));
             s.setFpsVariance((float) json.optDouble("fpsVariance", 0.0));
@@ -376,25 +394,25 @@ public class GameSession implements Serializable {
                 s.setGpuSamples(samples);
             }
 
-            // Auto-heal legacy sessions recorded prior to zero-FPS filtering
+            // Auto-heal legacy sessions recorded prior to < 5 FPS loading screen filtering
             if (s.getAvgFps() > 10.0f) {
-                if (s.getMinFps() <= 0.0f) {
+                if (s.getGameplayMinFps() <= 4.0f) {
                     float minSample = Float.MAX_VALUE;
                     for (Float f : s.getFpsSamples()) {
-                        if (f > 0.0f && f < minSample) minSample = f;
+                        if (f >= 5.0f && f < minSample) minSample = f;
                     }
                     if (minSample < Float.MAX_VALUE) {
-                        s.setMinFps(minSample);
+                        s.setGameplayMinFps(minSample);
                     } else {
-                        s.setMinFps(Math.round(s.getAvgFps() * 0.75f * 10.0f) / 10.0f);
+                        s.setGameplayMinFps(Math.round(s.getAvgFps() * 0.78f * 10.0f) / 10.0f);
                     }
                 }
-                if (s.getOnePercentLowFps() <= 0.0f) {
-                    float est1Pct = s.getMinFps() > 0 ? Math.max(s.getMinFps(), s.getAvgFps() * 0.82f) : s.getAvgFps() * 0.82f;
+                if (s.getOnePercentLowFps() <= 4.0f) {
+                    float est1Pct = s.getGameplayMinFps() > 0 ? Math.max(s.getGameplayMinFps() * 0.90f, s.getAvgFps() * 0.82f) : s.getAvgFps() * 0.82f;
                     s.setOnePercentLowFps(Math.round(est1Pct * 10.0f) / 10.0f);
                 }
-                if (s.getPointOnePercentLowFps() <= 0.0f) {
-                    float estPoint1 = s.getMinFps() > 0 ? s.getMinFps() : s.getOnePercentLowFps() * 0.92f;
+                if (s.getPointOnePercentLowFps() <= 4.0f) {
+                    float estPoint1 = s.getGameplayMinFps() > 0 ? s.getGameplayMinFps() * 0.82f : s.getOnePercentLowFps() * 0.88f;
                     s.setPointOnePercentLowFps(Math.round(estPoint1 * 10.0f) / 10.0f);
                 }
             }

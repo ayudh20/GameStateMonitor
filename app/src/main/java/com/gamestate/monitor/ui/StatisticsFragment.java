@@ -82,6 +82,9 @@ public class StatisticsFragment extends Fragment {
     private TextView tvBenchmarkAvgFps;
     private TextView tvBenchmarkMaxFps;
     private TextView tvBenchmarkMinFps;
+    private TextView tvBenchmarkAbsoluteMinFps;
+    private View layoutGameplayMinFps;
+    private View layoutGameplayMinTooltip;
     private TextView tvBenchmarkOneLow;
     private TextView tvBenchmarkPointOneLow;
     private TextView tvBenchmarkVariance;
@@ -202,6 +205,9 @@ public class StatisticsFragment extends Fragment {
         tvBenchmarkAvgFps = root.findViewById(R.id.tvBenchmarkAvgFps);
         tvBenchmarkMaxFps = root.findViewById(R.id.tvBenchmarkMaxFps);
         tvBenchmarkMinFps = root.findViewById(R.id.tvBenchmarkMinFps);
+        tvBenchmarkAbsoluteMinFps = root.findViewById(R.id.tvBenchmarkAbsoluteMinFps);
+        layoutGameplayMinFps = root.findViewById(R.id.layoutGameplayMinFps);
+        layoutGameplayMinTooltip = root.findViewById(R.id.layoutGameplayMinTooltip);
         tvBenchmarkOneLow = root.findViewById(R.id.tvBenchmarkOneLow);
         tvBenchmarkPointOneLow = root.findViewById(R.id.tvBenchmarkPointOneLow);
         tvBenchmarkVariance = root.findViewById(R.id.tvBenchmarkVariance);
@@ -254,6 +260,14 @@ public class StatisticsFragment extends Fragment {
         if (btnExportReport != null) {
             btnExportReport.setOnClickListener(v -> exportSessionReport());
         }
+
+        View.OnClickListener minFpsTooltipListener = v -> {
+            Toast.makeText(requireContext(),
+                    "Gameplay Min FPS excludes loading screens and non-gameplay samples (< 5 FPS).",
+                    Toast.LENGTH_SHORT).show();
+        };
+        if (layoutGameplayMinFps != null) layoutGameplayMinFps.setOnClickListener(minFpsTooltipListener);
+        if (layoutGameplayMinTooltip != null) layoutGameplayMinTooltip.setOnClickListener(minFpsTooltipListener);
 
         if (btnDeleteCurrentSession != null) {
             btnDeleteCurrentSession.setOnClickListener(v -> {
@@ -478,7 +492,8 @@ public class StatisticsFragment extends Fragment {
         // 3. FPS Benchmark Grid
         if (tvBenchmarkAvgFps != null) tvBenchmarkAvgFps.setText(String.format(Locale.getDefault(), "%.1f", s.getAvgFps()));
         if (tvBenchmarkMaxFps != null) tvBenchmarkMaxFps.setText(String.format(Locale.getDefault(), "%.1f", s.getMaxFps()));
-        if (tvBenchmarkMinFps != null) tvBenchmarkMinFps.setText(String.format(Locale.getDefault(), "%.1f", s.getMinFps()));
+        if (tvBenchmarkMinFps != null) tvBenchmarkMinFps.setText(String.format(Locale.getDefault(), "%.1f", s.getGameplayMinFps()));
+        if (tvBenchmarkAbsoluteMinFps != null) tvBenchmarkAbsoluteMinFps.setText(String.format(Locale.getDefault(), "Absolute: %.1f", s.getAbsoluteMinFps()));
         if (tvBenchmarkOneLow != null) tvBenchmarkOneLow.setText(String.format(Locale.getDefault(), "%.1f", s.getOnePercentLowFps()));
         if (tvBenchmarkPointOneLow != null) tvBenchmarkPointOneLow.setText(String.format(Locale.getDefault(), "%.1f", s.getPointOnePercentLowFps()));
         if (tvBenchmarkVariance != null) tvBenchmarkVariance.setText(String.format(Locale.getDefault(), "%.1f", s.getFpsVariance()));
@@ -642,7 +657,7 @@ public class StatisticsFragment extends Fragment {
                 "------------------------------------------\n" +
                 "📊 FPS Benchmark:\n" +
                 "• Average FPS: " + String.format(Locale.getDefault(), "%.1f", s.getAvgFps()) + "\n" +
-                "• Max: " + String.format(Locale.getDefault(), "%.1f", s.getMaxFps()) + " | Min: " + String.format(Locale.getDefault(), "%.1f", s.getMinFps()) + "\n" +
+                "• Max: " + String.format(Locale.getDefault(), "%.1f", s.getMaxFps()) + " | Gameplay Min: " + String.format(Locale.getDefault(), "%.1f", s.getGameplayMinFps()) + " (Absolute Min: " + String.format(Locale.getDefault(), "%.1f", s.getAbsoluteMinFps()) + ")\n" +
                 "• 1% Low: " + String.format(Locale.getDefault(), "%.1f", s.getOnePercentLowFps()) + " | 0.1% Low: " + String.format(Locale.getDefault(), "%.1f", s.getPointOnePercentLowFps()) + "\n" +
                 "• FPS Variance: " + String.format(Locale.getDefault(), "%.1f", s.getFpsVariance()) + "\n" +
                 "• Stability Score: " + String.format(Locale.getDefault(), "%.0f%%", s.getStabilityScorePercent()) + "\n" +
