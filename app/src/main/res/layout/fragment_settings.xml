@@ -205,10 +205,11 @@
                     app:headerTitle="About GameState Monitor" />
 
                 <TextView
+                    android:id="@+id/tvAboutAppVersion"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="GameState Monitor v1.0\nPure Android Hardware Telemetry Engine\nZero fake data • Direct SurfaceFlinger integration"
+                    android:text="GameState Monitor v1.1.0\nPure Android Hardware Telemetry Engine\nZero fake data • Direct SurfaceFlinger integration"
                     android:textColor="@color/figma_text_muted"
                     android:textSize="12sp" />
 

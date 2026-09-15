@@ -73,6 +73,12 @@ public class SettingsFragment extends Fragment {
         switchKeepScreenOn = root.findViewById(R.id.switchKeepScreenOn);
         switchAutoHideOverlay = root.findViewById(R.id.switchAutoHideOverlay);
         btnResetAllSettings = root.findViewById(R.id.btnResetAllSettings);
+
+        TextView tvAboutAppVersion = root.findViewById(R.id.tvAboutAppVersion);
+        if (tvAboutAppVersion != null) {
+            String ver = com.gamestate.monitor.BuildConfig.VERSION_NAME;
+            tvAboutAppVersion.setText("GameState Monitor v" + ver + "\nPure Android Hardware Telemetry Engine\nZero fake data • Direct SurfaceFlinger integration");
+        }
     }
 
     private void loadPreferences() {
