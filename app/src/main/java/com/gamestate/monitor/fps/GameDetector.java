@@ -187,9 +187,13 @@ public class GameDetector {
      * Queries dumpsys activity activities and dumpsys window displays for the active foreground package.
      */
     private String getAuthoritativeForegroundPackage() {
-        // 1. Check dumpsys activity activities (topResumedActivity is at the very top)
-        try {
-            java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "activity", "activities"});
+        boolean hasPrivilege = (context.checkSelfPermission("android.permission.DUMP") == PackageManager.PERMISSION_GRANTED)
+                || com.gamestate.monitor.shizuku.ShizukuManager.isPermissionGranted();
+
+        // 1. Check dumpsys activity activities (only if privileged to prevent subshell overhead)
+        if (hasPrivilege) {
+            try {
+                java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "activity", "activities"});
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             int linesRead = 0;
@@ -208,23 +212,24 @@ public class GameDetector {
             Log.d(TAG, "Error checking dumpsys activity activities: " + e.getMessage());
         }
 
-        // 2. Fallback: Check dumpsys window displays (mCurrentFocus / mFocusedApp)
-        try {
-            java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "window", "displays"});
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("mCurrentFocus=Window{") || line.contains("mFocusedApp=ActivityRecord{")) {
-                    String pkg = extractPackageFromLine(line);
-                    if (pkg != null && !pkg.isEmpty()) {
-                        reader.close();
-                        return pkg;
+            // 2. Fallback: Check dumpsys window displays (mCurrentFocus / mFocusedApp)
+            try {
+                java.lang.Process process = ShellExecutor.exec(new String[]{"dumpsys", "window", "displays"});
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.contains("mCurrentFocus=Window{") || line.contains("mFocusedApp=ActivityRecord{")) {
+                        String pkg = extractPackageFromLine(line);
+                        if (pkg != null && !pkg.isEmpty()) {
+                            reader.close();
+                            return pkg;
+                        }
                     }
                 }
+                reader.close();
+            } catch (Exception e) {
+                Log.d(TAG, "Error checking dumpsys window displays: " + e.getMessage());
             }
-            reader.close();
-        } catch (Exception e) {
-            Log.d(TAG, "Error checking dumpsys window displays: " + e.getMessage());
         }
 
         return null;
