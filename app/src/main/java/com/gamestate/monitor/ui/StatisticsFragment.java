@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -71,6 +72,7 @@ public class StatisticsFragment extends Fragment {
     private TextView tvSessionDuration;
     private TextView tvSessionStartTime;
     private TextView tvSessionTargetHz;
+    private LinearLayout layoutSessionInsightsList;
 
     // Grade
     private TextView tvPerformanceGrade;
@@ -196,6 +198,7 @@ public class StatisticsFragment extends Fragment {
         tvSessionDuration = root.findViewById(R.id.tvSessionDuration);
         tvSessionStartTime = root.findViewById(R.id.tvSessionStartTime);
         tvSessionTargetHz = root.findViewById(R.id.tvSessionTargetHz);
+        layoutSessionInsightsList = root.findViewById(R.id.layoutSessionInsightsList);
 
         tvPerformanceGrade = root.findViewById(R.id.tvPerformanceGrade);
         tvGradeStability = root.findViewById(R.id.tvGradeStability);
@@ -489,6 +492,37 @@ public class StatisticsFragment extends Fragment {
         if (tvGradeThermals != null) tvGradeThermals.setText("Thermals: " + s.getThermalRating());
         if (tvGradeBattery != null) tvGradeBattery.setText("Battery: " + s.getBatteryImpactRating());
 
+        // 2.5 AI Session Insights
+        if (layoutSessionInsightsList != null) {
+            layoutSessionInsightsList.removeAllViews();
+            List<com.gamestate.monitor.model.SessionInsight> insights = com.gamestate.monitor.util.SessionInsightsEngine.analyzeSession(s, historyManager.getAllSessions());
+            LayoutInflater inflater = LayoutInflater.from(requireContext());
+            for (com.gamestate.monitor.model.SessionInsight ins : insights) {
+                View item = inflater.inflate(R.layout.item_session_insight, layoutSessionInsightsList, false);
+                TextView tvIcon = item.findViewById(R.id.tvInsightIcon);
+                TextView tvTitle = item.findViewById(R.id.tvInsightTitle);
+                TextView tvMsg = item.findViewById(R.id.tvInsightMessage);
+
+                tvTitle.setText(ins.getTitle());
+                tvMsg.setText(ins.getMessage());
+
+                if (ins.getType() == com.gamestate.monitor.model.SessionInsight.Type.WARNING) {
+                    tvIcon.setText("⚠");
+                    tvIcon.setTextColor(Color.parseColor("#FFA726"));
+                } else if (ins.getType() == com.gamestate.monitor.model.SessionInsight.Type.COMPARISON) {
+                    tvIcon.setText("📊");
+                    tvIcon.setTextColor(Color.parseColor("#00E5FF"));
+                } else if (ins.getType() == com.gamestate.monitor.model.SessionInsight.Type.MILESTONE) {
+                    tvIcon.setText("🏆");
+                    tvIcon.setTextColor(Color.parseColor("#BA68C8"));
+                } else {
+                    tvIcon.setText("✓");
+                    tvIcon.setTextColor(Color.parseColor("#00E676"));
+                }
+                layoutSessionInsightsList.addView(item);
+            }
+        }
+
         // 3. FPS Benchmark Grid
         if (tvBenchmarkAvgFps != null) tvBenchmarkAvgFps.setText(String.format(Locale.getDefault(), "%.1f", s.getAvgFps()));
         if (tvBenchmarkMaxFps != null) tvBenchmarkMaxFps.setText(String.format(Locale.getDefault(), "%.1f", s.getMaxFps()));
@@ -628,14 +662,13 @@ public class StatisticsFragment extends Fragment {
             return;
         }
 
-        String report = generateReportText(inspectedSession);
-        Intent sendIntent = new Intent();
-        sendIntent.setAction(Intent.ACTION_SEND);
-        sendIntent.putExtra(Intent.EXTRA_TEXT, report);
-        sendIntent.setType("text/plain");
-
-        Intent shareIntent = Intent.createChooser(sendIntent, "Share Game Benchmark Report");
-        startActivity(shareIntent);
+        Drawable appIcon = null;
+        if (inspectedSession.getPackageName() != null) {
+            try {
+                appIcon = requireContext().getPackageManager().getApplicationIcon(inspectedSession.getPackageName());
+            } catch (Exception ignored) {}
+        }
+        com.gamestate.monitor.util.ReportCardGenerator.shareReportCard(requireContext(), inspectedSession, appIcon);
     }
 
     private void exportSessionReport() {
@@ -643,7 +676,13 @@ public class StatisticsFragment extends Fragment {
             Toast.makeText(requireContext(), "No session active to export.", Toast.LENGTH_SHORT).show();
             return;
         }
-        shareSessionSummary();
+
+        String report = generateReportText(inspectedSession);
+        android.content.ClipboardManager cm = (android.content.ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("Benchmark Report", report));
+            Toast.makeText(requireContext(), "Full benchmark report copied to clipboard!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String generateReportText(GameSession s) {

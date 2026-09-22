@@ -63,6 +63,7 @@ public class MainActivity extends AppCompatActivity {
 
     public enum Tab {
         DASHBOARD,
+        LIBRARY,
         DIAGNOSTICS,
         OVERLAY,
         STATISTICS,
@@ -73,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Dock View References
     private LinearLayout navTabDashboard;
-    private LinearLayout navTabDiagnostics;
+    private LinearLayout navTabLibrary;
     private FrameLayout btnNavCenter;
     private View centerHalo;
     private ImageView ivNavCenterIcon;
@@ -86,9 +87,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvNavDashboard;
     private View indNavDashboard;
 
-    private ImageView ivNavDiagnostics;
-    private TextView tvNavDiagnostics;
-    private View indNavDiagnostics;
+    private ImageView ivNavLibrary;
+    private TextView tvNavLibrary;
+    private View indNavLibrary;
 
     private ImageView ivNavStatistics;
     private TextView tvNavStatistics;
@@ -205,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void bindDockViews() {
         navTabDashboard = findViewById(R.id.navTabDashboard);
-        navTabDiagnostics = findViewById(R.id.navTabDiagnostics);
+        navTabLibrary = findViewById(R.id.navTabLibrary);
         btnNavCenter = findViewById(R.id.btnNavCenter);
         centerHalo = findViewById(R.id.centerHalo);
         ivNavCenterIcon = findViewById(R.id.ivNavCenterIcon);
@@ -217,9 +218,9 @@ public class MainActivity extends AppCompatActivity {
         tvNavDashboard = findViewById(R.id.tvNavDashboard);
         indNavDashboard = findViewById(R.id.indNavDashboard);
 
-        ivNavDiagnostics = findViewById(R.id.ivNavDiagnostics);
-        tvNavDiagnostics = findViewById(R.id.tvNavDiagnostics);
-        indNavDiagnostics = findViewById(R.id.indNavDiagnostics);
+        ivNavLibrary = findViewById(R.id.ivNavLibrary);
+        tvNavLibrary = findViewById(R.id.tvNavLibrary);
+        indNavLibrary = findViewById(R.id.indNavLibrary);
 
         ivNavStatistics = findViewById(R.id.ivNavStatistics);
         tvNavStatistics = findViewById(R.id.tvNavStatistics);
@@ -232,7 +233,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupDockListeners() {
         navTabDashboard.setOnClickListener(v -> selectTab(Tab.DASHBOARD));
-        navTabDiagnostics.setOnClickListener(v -> selectTab(Tab.DIAGNOSTICS));
+        navTabLibrary.setOnClickListener(v -> selectTab(Tab.LIBRARY));
         btnNavCenter.setOnClickListener(v -> selectTab(Tab.OVERLAY));
         navTabStatistics.setOnClickListener(v -> selectTab(Tab.STATISTICS));
         navTabSettings.setOnClickListener(v -> selectTab(Tab.SETTINGS));
@@ -258,6 +259,9 @@ public class MainActivity extends AppCompatActivity {
 
         Fragment fragment;
         switch (tab) {
+            case LIBRARY:
+                fragment = new com.gamestate.monitor.ui.GameLibraryFragment();
+                break;
             case DIAGNOSTICS:
                 fragment = new DiagnosticsFragment();
                 break;
@@ -292,11 +296,11 @@ public class MainActivity extends AppCompatActivity {
         tvNavDashboard.setTextColor(isDash ? activeColor : inactiveColor);
         indNavDashboard.setVisibility(isDash ? View.VISIBLE : View.INVISIBLE);
 
-        // Diagnostics
-        boolean isDiag = (tab == Tab.DIAGNOSTICS);
-        ivNavDiagnostics.setImageTintList(ColorStateList.valueOf(isDiag ? activeColor : inactiveColor));
-        tvNavDiagnostics.setTextColor(isDiag ? activeColor : inactiveColor);
-        indNavDiagnostics.setVisibility(isDiag ? View.VISIBLE : View.INVISIBLE);
+        // Library
+        boolean isLib = (tab == Tab.LIBRARY);
+        ivNavLibrary.setImageTintList(ColorStateList.valueOf(isLib ? activeColor : inactiveColor));
+        tvNavLibrary.setTextColor(isLib ? activeColor : inactiveColor);
+        indNavLibrary.setVisibility(isLib ? View.VISIBLE : View.INVISIBLE);
 
         // Statistics
         boolean isStats = (tab == Tab.STATISTICS);

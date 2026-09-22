@@ -66,9 +66,9 @@
                 android:visibility="visible" />
         </LinearLayout>
 
-        <!-- Tab 2: Diagnostics -->
+        <!-- Tab 2: Library -->
         <LinearLayout
-            android:id="@+id/navTabDiagnostics"
+            android:id="@+id/navTabLibrary"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -79,25 +79,25 @@
             android:orientation="vertical">
 
             <ImageView
-                android:id="@+id/ivNavDiagnostics"
+                android:id="@+id/ivNavLibrary"
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_nav_diagnostics"
+                android:src="@drawable/ic_gamepad"
                 app:tint="@color/figma_text_muted" />
 
             <TextView
-                android:id="@+id/tvNavDiagnostics"
+                android:id="@+id/tvNavLibrary"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
                 android:letterSpacing="0.04"
-                android:text="Diagnostics"
+                android:text="Library"
                 android:textColor="@color/figma_text_muted"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
             <View
-                android:id="@+id/indNavDiagnostics"
+                android:id="@+id/indNavLibrary"
                 android:layout_width="12dp"
                 android:layout_height="2dp"
                 android:layout_marginTop="2dp"

@@ -523,6 +523,37 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- ============================================================ -->
+            <!-- 2.5. AI SESSION INSIGHTS CARD                                -->
+            <!-- ============================================================ -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardSessionInsights"
+                style="@style/Widget.GameState.Card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/card_spacing">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <com.gamestate.monitor.ui.CardHeaderView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:headerIcon="@drawable/ic_bolt"
+                        app:headerTitle="AI Session Insights" />
+
+                    <LinearLayout
+                        android:id="@+id/layoutSessionInsightsList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="vertical" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- 3. FPS BENCHMARK CARD -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.GameState.Card"
@@ -1399,7 +1430,7 @@
                     android:layout_height="46dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="Export Report"
+                    android:text="Copy Report"
                     android:textColor="@color/figma_cyan"
                     android:textSize="12sp"
                     app:cornerRadius="10dp"
@@ -1413,7 +1444,7 @@
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/figma_cyan"
-                    android:text="Share Summary"
+                    android:text="Share Card 📸"
                     android:textColor="@color/black"
                     android:textSize="12sp"
                     app:cornerRadius="10dp" />

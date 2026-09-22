@@ -13,6 +13,7 @@ import com.gamestate.monitor.util.CpuMonitor;
 import com.gamestate.monitor.util.DeviceStatsManager;
 import com.gamestate.monitor.util.GpuMonitor;
 import com.gamestate.monitor.util.SessionHistoryManager;
+import com.gamestate.monitor.util.SessionInsightsEngine;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -392,17 +393,8 @@ public class SessionAnalyticsTracker {
         else if (drainRate <= 20f) s.setBatteryImpactRating("Moderate");
         else s.setBatteryImpactRating("High");
 
-        // Composite scoring (100 pts)
-        float score = (stability * 0.40f)
-                + (s.getSmoothFramesPercent() * 0.25f)
-                + (Math.max(0f, 100f - (peakTemp - 30f) * 4f) * 0.20f)
-                + (Math.max(0f, 100f - drainRate * 3f) * 0.15f);
-
-        if (score >= 90f) s.setGrade("A+");
-        else if (score >= 80f) s.setGrade("A");
-        else if (score >= 70f) s.setGrade("B");
-        else if (score >= 58f) s.setGrade("C");
-        else s.setGrade("D");
+        // Composite S/A+/A/B/C Grade
+        s.setGrade(SessionInsightsEngine.computeSessionGrade(s));
     }
 
     public synchronized void finalizeActiveSession() {
